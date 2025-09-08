@@ -1,0 +1,953 @@
+basePath: /
+definitions:
+  models.AvailableSeatsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.SeatStruct'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  models.Cinema:
+    properties:
+      cinema_location:
+        type: string
+      cinema_name:
+        type: string
+    type: object
+  models.CreateOrderRequest:
+    properties:
+      email:
+        type: string
+      full_name:
+        type: string
+      payment_id:
+        type: integer
+      phone_number:
+        type: string
+      schedule_id:
+        type: integer
+      seats_code:
+        items:
+          type: string
+        type: array
+      total_price:
+        type: integer
+      users_id:
+        type: integer
+    required:
+    - email
+    - full_name
+    - payment_id
+    - phone_number
+    - schedule_id
+    - seats_code
+    - total_price
+    - users_id
+    type: object
+  models.Movie:
+    properties:
+      image:
+        type: string
+      title:
+        type: string
+    type: object
+  models.MovieDetailResponse:
+    properties:
+      data:
+        $ref: '#/definitions/models.MovieDetailStruct'
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  models.MovieDetailStruct:
+    properties:
+      backdrop_path:
+        type: string
+      cast:
+        items:
+          type: string
+        type: array
+      director:
+        type: string
+      duration:
+        type: integer
+      genre:
+        items:
+          type: string
+        type: array
+      id:
+        type: integer
+      poster_path:
+        type: string
+      release_date:
+        type: string
+      synopsis:
+        type: string
+      title:
+        type: string
+    type: object
+  models.MovieListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.MovieStruct'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  models.MovieStruct:
+    properties:
+      backdrop_path:
+        type: string
+      casts:
+        items:
+          type: string
+        type: array
+      created_at:
+        type: string
+      director_id:
+        type: integer
+      director_name:
+        type: string
+      duration:
+        type: integer
+      genres:
+        items:
+          type: string
+        type: array
+      id:
+        type: integer
+      popularity:
+        type: integer
+      poster_path:
+        type: string
+      release_date:
+        type: string
+      synopsis:
+        type: string
+      title:
+        type: string
+      update_at:
+        type: string
+    required:
+    - casts
+    - genres
+    type: object
+  models.MovieUpdateRequest:
+    properties:
+      backdrop_path:
+        type: string
+      director_id:
+        type: integer
+      duration:
+        type: integer
+      poster_path:
+        type: string
+      release_date:
+        type: string
+      synopsis:
+        type: string
+      title:
+        type: string
+    type: object
+  models.Order:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: integer
+      ispaid:
+        type: boolean
+      payment_id:
+        type: integer
+      phone_number:
+        type: string
+      schedule_id:
+        type: integer
+      total_price:
+        type: integer
+      updated_at:
+        type: string
+      users_id:
+        type: integer
+    type: object
+  models.OrderHistory:
+    properties:
+      cinema:
+        $ref: '#/definitions/models.Cinema'
+      created_at:
+        type: string
+      is_paid:
+        type: boolean
+      movie:
+        $ref: '#/definitions/models.Movie'
+      order_id:
+        type: integer
+      schedule:
+        $ref: '#/definitions/models.Schedule'
+      seats:
+        items:
+          type: string
+        type: array
+      total_price:
+        type: integer
+    type: object
+  models.OrderHistoryResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.OrderHistory'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  models.PaginatedMovieListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.MovieStruct'
+        type: array
+      message:
+        type: string
+      pagination:
+        $ref: '#/definitions/models.PaginationInfo'
+      status:
+        type: string
+    type: object
+  models.PaginationInfo:
+    properties:
+      currentPage:
+        type: integer
+      itemsPerPage:
+        type: integer
+      totalItems:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  models.PingModel:
+    properties:
+      contentType:
+        example: application/json
+        type: string
+      message:
+        example: pong
+        type: string
+      requestId:
+        example: "123"
+        type: string
+    type: object
+  models.Profile:
+    properties:
+      Profile_image:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      phone_number:
+        type: string
+      point:
+        type: integer
+      users_id:
+        type: integer
+    type: object
+  models.Response:
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  models.ResponseCreateOrder:
+    properties:
+      data:
+        $ref: '#/definitions/models.Order'
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  models.ResponseSchedule:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.ScheduleDetails'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  models.ResponseScheduleByMovie:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.ScheduleDetails'
+        type: array
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  models.Schedule:
+    properties:
+      cinema_id:
+        type: integer
+      date:
+        type: string
+      id:
+        type: integer
+      location:
+        type: integer
+      movie_id:
+        type: integer
+      time:
+        type: string
+      time_id:
+        type: integer
+    type: object
+  models.ScheduleDetails:
+    properties:
+      cinema_name:
+        type: string
+      date:
+        type: string
+      id:
+        type: integer
+      location:
+        type: string
+      time:
+        type: string
+    type: object
+  models.SeatStruct:
+    properties:
+      id:
+        type: integer
+      seats_code:
+        type: string
+    type: object
+  models.UsersStruct:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      password:
+        type: string
+      role:
+        type: string
+    required:
+    - email
+    type: object
+host: localhost:3000
+info:
+  contact: {}
+  description: RESTful API created using gin for Back-End Tickitz
+  title: Back-End Tickitz
+  version: "1.0"
+paths:
+  /admin/movies:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all movies for admin
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.MovieListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all movies (Admin only)
+      tags:
+      - Admin/Movies
+  /admin/movies/:movieId:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a movie from the database by its ID (admin only)
+      parameters:
+      - description: Movie ID
+        in: path
+        name: movieId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete a movie (Admin only)
+      tags:
+      - Admin/Movies
+    put:
+      consumes:
+      - application/json
+      description: Updates a movie's details by its ID (admin only)
+      parameters:
+      - description: Movie ID
+        in: path
+        name: movieId
+        required: true
+        type: integer
+      - description: Updated movie details
+        in: body
+        name: movie
+        required: true
+        schema:
+          $ref: '#/definitions/models.MovieUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
+      summary: Update a movie (Admin only)
+      tags:
+      - Admin/Movies
+  /movies:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of all movies
+      parameters:
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page (default 10)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PaginatedMovieListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Get all movies with pagination
+      tags:
+      - Movies
+  /movies/:movieId:
+    get:
+      consumes:
+      - application/json
+      description: Get a single movie's details by its ID
+      parameters:
+      - description: Movie ID
+        in: path
+        name: movieId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.MovieDetailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Get movie detail
+      tags:
+      - Movies
+  /movies/popular:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of popular movies
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.MovieListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Get popular movies
+      tags:
+      - Movies
+  /movies/upcoming:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of upcoming movies
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.MovieListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Get upcoming movies
+      tags:
+      - Movies
+  /orders:
+    post:
+      consumes:
+      - application/json
+      description: Create a new movie ticket order
+      parameters:
+      - description: Order data
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.ResponseCreateOrder'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Create a new order
+      tags:
+      - Orders
+  /orders/{orderId}:
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific order by its ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: orderId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.OrderHistoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Get order by ID
+      tags:
+      - Orders
+  /orders/history/{userId}:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all orders for a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.OrderHistoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Get order history
+      tags:
+      - Orders
+  /ping:
+    get:
+      parameters:
+      - description: Header for requestID
+        in: header
+        name: X-Request-ID
+        required: true
+        type: string
+      - description: Header for requestID
+        in: header
+        name: Content-Type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.PingModel'
+      tags:
+      - ping
+  /ping/:id/:param2:
+    get:
+      parameters:
+      - description: path params for id
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: path params for param2
+        in: path
+        name: param2
+        required: true
+        type: string
+      - description: query for q
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      tags:
+      - ping
+  /schedules:
+    get:
+      consumes:
+      - application/json
+      description: Get all available movie schedules
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponseSchedule'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Get all schedules
+      tags:
+      - Schedules
+  /schedules/movie/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get all schedules for a specific movie by ID
+      parameters:
+      - description: Movie ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.ResponseScheduleByMovie'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Get schedules by movie ID
+      tags:
+      - Schedules
+  /seats/:scheduleId/available:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of available seats for a specific schedule
+      parameters:
+      - description: Schedule ID
+        in: path
+        name: scheduleId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.AvailableSeatsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Get available seats
+      tags:
+      - Seats
+  /seats/:seatId:
+    get:
+      consumes:
+      - application/json
+      description: Get a single seat by its ID
+      parameters:
+      - description: Seat ID
+        in: path
+        name: seatId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.SeatStruct'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Get seat by ID
+      tags:
+      - Seats
+  /users/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get user profile by user ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Get profile by ID
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Update a user's profile information by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated profile information
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/models.Profile'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Update user profile
+      tags:
+      - Users
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Login with email and password
+      parameters:
+      - description: Input email and password
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.UsersStruct'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Login user
+      tags:
+      - Users
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: Register with email and password for access application
+      parameters:
+      - description: Input email and password
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.UsersStruct'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/models.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/models.Response'
+      summary: Register user
+      tags:
+      - Users
+swagger: "2.0"
