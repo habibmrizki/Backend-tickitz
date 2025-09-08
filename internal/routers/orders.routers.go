@@ -13,9 +13,7 @@ func InitOrderRouter(router *gin.Engine, db *pgxpool.Pool) {
 	orderHandler := handlers.NewOrderHandlers(orderRepo)
 
 	ordersGroup := router.Group("/orders")
-	{
-		ordersGroup.POST("", orderHandler.CreateOrder)
-		ordersGroup.GET("/history/:userId", orderHandler.GetOrderHistory)
-		ordersGroup.GET("/:orderId", orderHandler.GetOrderByID)
-	}
+	ordersGroup.POST("", orderHandler.CreateOrder)
+	ordersGroup.GET("/history/:userId", orderHandler.GetOrderHistory)
+	ordersGroup.GET("/:orderId", orderHandler.GetOrderByID)
 }
