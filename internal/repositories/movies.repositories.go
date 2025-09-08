@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"log"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/habibmrizki/back-end-tickitz/internal/models"
@@ -197,27 +199,51 @@ func (m *MovieRepository) GetMovieDetail(ctx context.Context, movieID int) (*mod
 }
 
 // GetMoviesWithPagination mengambil semua film dengan paginasi
-func (m *MovieRepository) GetMoviesWithPagination(ctx context.Context, limit, page int) ([]models.MovieStruct, int, error) {
+func (m *MovieRepository) GetMoviesWithPagination(ctx context.Context, limit, page int, name string) ([]models.MovieStruct, int, error) {
 	offset := (page - 1) * limit
 
+	// Gunakan strings.Builder untuk membuat query dinamis
+	var countQuery strings.Builder
+	var mainQuery strings.Builder
+
+	countQuery.WriteString("SELECT COUNT(*) FROM movie")
+	mainQuery.WriteString(`
+		SELECT
+			id, title, synopsis, poster_path, COALESCE(duration, 0) AS duration, release_date
+		FROM
+			movie
+	`)
+
+	var args []interface{}
+
+	if name != "" {
+		countQuery.WriteString(" WHERE title ILIKE $1")
+		mainQuery.WriteString(" WHERE title ILIKE $1")
+		args = append(args, "%"+name+"%")
+	}
+
+	// Selesaikan query utama dengan ORDER BY, LIMIT, dan OFFSET
+	mainQuery.WriteString(`
+		ORDER BY
+			created_at DESC
+		LIMIT $`)
+	mainQuery.WriteString(strconv.Itoa(len(args) + 1))
+	mainQuery.WriteString(" OFFSET $")
+	mainQuery.WriteString(strconv.Itoa(len(args) + 2))
+	mainQuery.WriteString(";")
+
+	args = append(args, limit, offset)
+
+	// Lakukan query untuk total film
 	var totalMovies int
-	totalSql := `SELECT COUNT(*) FROM movie;`
-	err := m.db.QueryRow(ctx, totalSql).Scan(&totalMovies)
+	err := m.db.QueryRow(ctx, countQuery.String(), args[:len(args)-2]...).Scan(&totalMovies)
 	if err != nil {
 		log.Println("[ERROR]: Failed to get total movies count: ", err.Error())
 		return nil, 0, err
 	}
 
-	sql := `
-		SELECT
-			id, title, synopsis, poster_path, COALESCE(duration, 0) AS duration, release_date
-		FROM
-			movie
-		ORDER BY
-			created_at DESC
-		LIMIT $1 OFFSET $2;
-	`
-	rows, err := m.db.Query(ctx, sql, limit, offset)
+	// Lakukan query untuk data film
+	rows, err := m.db.Query(ctx, mainQuery.String(), args...)
 	if err != nil {
 		log.Println("[ERROR]: Failed to get all movies with pagination: ", err.Error())
 		return nil, 0, err

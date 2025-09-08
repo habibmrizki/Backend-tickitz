@@ -148,13 +148,14 @@ func (m *MovieHandler) GetAllMovies(ctx *gin.Context) {
 	})
 }
 
-// GetMoviesWithPagination retrieves all movies with pagination
-// @summary                 Get all movies with pagination
+// GetMoviesWithPagination retrieves all movies with pagination and optional filtering
+// @summary                 Get all movies with pagination and optional filtering
 // @router                  /movies [get]
-// @Description             Retrieves a paginated list of all movies
+// @Description             Retrieves a paginated list of all movies, with an optional filter by title
 // @Tags                    Movies
 // @param                   page query int false "Page number (default 1)"
 // @param                   limit query int false "Number of items per page (default 10)"
+// @param                   name query string false "Movie title to filter by"
 // @accept                  json
 // @produce                 json
 // @success                 200 {object} models.PaginatedMovieListResponse
@@ -163,6 +164,7 @@ func (m *MovieHandler) GetAllMovies(ctx *gin.Context) {
 func (m *MovieHandler) GetMoviesWithPagination(ctx *gin.Context) {
 	pageStr := ctx.DefaultQuery("page", "1")
 	limitStr := ctx.DefaultQuery("limit", "10")
+	name := ctx.DefaultQuery("name", "") // Ambil parameter 'name' dari query
 
 	page, err := strconv.Atoi(pageStr)
 	if err != nil || page <= 0 {
@@ -182,7 +184,7 @@ func (m *MovieHandler) GetMoviesWithPagination(ctx *gin.Context) {
 		return
 	}
 
-	movies, totalMovies, err := m.movieRepo.GetMoviesWithPagination(ctx.Request.Context(), limit, page)
+	movies, totalMovies, err := m.movieRepo.GetMoviesWithPagination(ctx.Request.Context(), limit, page, name)
 	if err != nil {
 		log.Println("[ERROR]: Failed to get all movies: ", err.Error())
 		ctx.JSON(http.StatusInternalServerError, models.Response{
