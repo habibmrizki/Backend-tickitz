@@ -23,7 +23,7 @@ func main() {
 	}
 	log.Println(os.Getenv("DBUSERS"))
 	log.Println(os.Getenv("JWT_SECRET"))
-	log.Println(os.Getenv("JWTISSUER"))
+	log.Println(os.Getenv("JWT_ISSUER"))
 
 	// Inisialisasi DB
 	db, err := configs.InitDb()
