@@ -1,0 +1,52 @@
+package middlewares
+
+import (
+	"net/http"
+	"slices"
+
+	"github.com/gin-gonic/gin"
+	"github.com/habibmrizki/back-end-tickitz/pkg"
+)
+
+func Access(roles ...string) func(*gin.Context) {
+	return func(ctx *gin.Context) {
+		// ambil data claim
+		claims, isExist := ctx.Get("claims")
+		if !isExist {
+			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"error":   "Silahkan login kembali",
+			})
+			return
+		}
+		user, ok := claims.(pkg.Claims)
+		if !ok {
+			// log.Println("Cannot cast claims into pkg.claims")
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"error":   "Internal server error",
+			})
+			return
+		}
+		if !slices.Contains(roles, user.Role) {
+			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"error":   "Anda tidak punya hak akses untuk resource ini",
+			})
+			return
+		}
+		ctx.Next()
+	}
+}
+
+func AdminOnly(ctx *gin.Context) {
+	role, exists := ctx.Get("role")
+	if !exists || role != "admin" {
+		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"success": false,
+			"error":   "Admin access required",
+		})
+		return
+	}
+	ctx.Next()
+}
