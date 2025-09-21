@@ -18,7 +18,10 @@ FROM alpine:3.22
 
 WORKDIR /app
 
-COPY --from=builder /build/server /build/.env ./
+# COPY --from=builder /build/server /build/.env ./
+
+COPY --from=builder /build/server ./server
+# COPY .env .
 
 RUN chmod +x server
 
