@@ -1,0 +1,71 @@
+# services:
+#   # bikin nama dari contaienr  atua service nya
+#   const_a:
+#     # harus di tab terlebih dahili ntar dikiran bikki container baru
+#     image: busybox:lates
+#     command: "sleep 1d"
+#     networks:
+#       # bisa lebih dari 1 makanya dibkin kaya dibawah
+#       - "app-net"
+#   const_b:
+#     # harus di tab terlebih dahili ntar dikiran bikki container baru
+#     image: busybox:lates
+#     command: "sleep 1d"
+#     networks:
+#       # bisa lebih dari 1 makanya dibkin kaya dibawah
+#       - "app-net"
+# networks:
+#   app-net:
+#     # ada externak true sudah dibuat
+#
+#     external: true
+# volume:
+# #biar nggak masuk ke container tambahin opsi menggunakan -d (docker compose up -d)
+# #docker compose inspect <>
+# #docker compose ps
+# #docker compose up -d
+# volume agar data nya persistance
+
+#  percobaaan 2
+# services:
+#   const_a:
+#     image: busybox:latest
+#     command: "sleep 1d"
+#     networks:
+#       - app-net
+#   const_b:
+#     image: busybox:latest
+#     command: "sleep 1d"
+#     networks:
+#       - app-net
+# networks:
+#   app-net:
+# volume:
+#   private-data:
+
+# percobaan 3
+services:
+  postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_PASSWORD=350c8d6964c6a208
+      - POSTGRES_USER=habib
+      - POSTGRES_DB=Project
+    # env_file:
+    #   - fileName
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      # por forwardig yang dimana kan coitanier termausk isolasi, mdan 8008 itu kan dilau container makan dihubungka dengan prot forwading
+    ports:
+      - 8008:5432
+    networks:
+      - my-net
+
+  pgc:
+    build: .
+    networks:
+      - my-net
+networks:
+  my-net:
+volumes:
+  pg-data:
