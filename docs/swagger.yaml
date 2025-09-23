@@ -11,6 +11,13 @@ definitions:
       status:
         type: string
     type: object
+  models.Cast:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
   models.Cinema:
     properties:
       cinema_location:
@@ -18,35 +25,12 @@ definitions:
       cinema_name:
         type: string
     type: object
-  models.CreateOrderRequest:
+  models.Genre:
     properties:
-      email:
+      id:
+        type: integer
+      name:
         type: string
-      full_name:
-        type: string
-      payment_id:
-        type: integer
-      phone_number:
-        type: string
-      schedule_id:
-        type: integer
-      seats_code:
-        items:
-          type: string
-        type: array
-      total_price:
-        type: integer
-      users_id:
-        type: integer
-    required:
-    - email
-    - full_name
-    - payment_id
-    - phone_number
-    - schedule_id
-    - seats_code
-    - total_price
-    - users_id
     type: object
   models.Movie:
     properties:
@@ -69,16 +53,18 @@ definitions:
       backdrop_path:
         type: string
       cast:
+        description: Updated to use the new Cast struct
         items:
-          type: string
+          $ref: '#/definitions/models.Cast'
         type: array
       director:
         type: string
       duration:
         type: integer
       genre:
+        description: Updated to use the new Genre struct
         items:
-          type: string
+          $ref: '#/definitions/models.Genre'
         type: array
       id:
         type: integer
@@ -104,6 +90,8 @@ definitions:
     type: object
   models.MovieStruct:
     properties:
+      archived_at:
+        type: string
       backdrop_path:
         type: string
       casts:
@@ -140,23 +128,6 @@ definitions:
     - casts
     - genres
     type: object
-  models.MovieUpdateRequest:
-    properties:
-      backdrop_path:
-        type: string
-      director_id:
-        type: integer
-      duration:
-        type: integer
-      poster_path:
-        type: string
-      release_date:
-        type: string
-      synopsis:
-        type: string
-      title:
-        type: string
-    type: object
   models.Order:
     properties:
       created_at:
@@ -169,12 +140,16 @@ definitions:
         type: integer
       ispaid:
         type: boolean
-      payment_id:
+      payment_method_id:
         type: integer
       phone_number:
         type: string
       schedule_id:
         type: integer
+      seats_code:
+        items:
+          type: string
+        type: array
       total_price:
         type: integer
       updated_at:
@@ -192,8 +167,6 @@ definitions:
         type: boolean
       movie:
         $ref: '#/definitions/models.Movie'
-      order_id:
-        type: integer
       schedule:
         $ref: '#/definitions/models.Schedule'
       seats:
@@ -201,6 +174,8 @@ definitions:
           type: string
         type: array
       total_price:
+        type: integer
+      users_id:
         type: integer
     type: object
   models.OrderHistoryResponse:
@@ -250,21 +225,6 @@ definitions:
         example: "123"
         type: string
     type: object
-  models.Profile:
-    properties:
-      Profile_image:
-        type: string
-      first_name:
-        type: string
-      last_name:
-        type: string
-      phone_number:
-        type: string
-      point:
-        type: integer
-      users_id:
-        type: integer
-    type: object
   models.Response:
     properties:
       message:
@@ -282,17 +242,6 @@ definitions:
         type: string
     type: object
   models.ResponseSchedule:
-    properties:
-      data:
-        items:
-          $ref: '#/definitions/models.ScheduleDetails'
-        type: array
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  models.ResponseScheduleByMovie:
     properties:
       data:
         items:
@@ -352,6 +301,7 @@ definitions:
         type: string
     required:
     - email
+    - password
     type: object
 host: localhost:3000
 info:
@@ -380,31 +330,62 @@ paths:
       - ApiKeyAuth: []
       summary: Get all movies (Admin only)
       tags:
-      - Admin/Movies
-  /admin/movies/:movieId:
-    delete:
+      - Admin
+    post:
       consumes:
-      - application/json
-      description: Deletes a movie from the database by its ID (admin only)
+      - multipart/form-data
+      description: Creates a new movie with details, poster, and backdrop
       parameters:
-      - description: Movie ID
-        in: path
-        name: movieId
+      - description: Movie title
+        in: formData
+        name: title
         required: true
-        type: integer
+        type: string
+      - description: Movie description
+        in: formData
+        name: description
+        required: true
+        type: string
+      - description: Release date (YYYY-MM-DD)
+        in: formData
+        name: release_date
+        required: true
+        type: string
+      - description: Poster image
+        in: formData
+        name: poster
+        required: true
+        type: file
+      - description: Backdrop image
+        in: formData
+        name: backdrop
+        required: true
+        type: file
+      - collectionFormat: csv
+        description: Genre IDs (comma separated)
+        in: formData
+        items:
+          type: integer
+        name: genre_ids
+        required: true
+        type: array
+      - collectionFormat: csv
+        description: Cast IDs (comma separated)
+        in: formData
+        items:
+          type: integer
+        name: cast_ids
+        required: true
+        type: array
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             $ref: '#/definitions/models.Response'
         "400":
           description: Bad Request
-          schema:
-            $ref: '#/definitions/models.Response'
-        "404":
-          description: Not Found
           schema:
             $ref: '#/definitions/models.Response'
         "500":
@@ -413,25 +394,54 @@ paths:
             $ref: '#/definitions/models.Response'
       security:
       - ApiKeyAuth: []
-      summary: Delete a movie (Admin only)
+      summary: Create a new movie (Admin only)
       tags:
-      - Admin/Movies
-    put:
+      - Admin
+  /admin/movies/{id}:
+    patch:
       consumes:
-      - application/json
-      description: Updates a movie's details by its ID (admin only)
+      - multipart/form-data
+      description: Updates movie details, poster, and backdrop
       parameters:
       - description: Movie ID
         in: path
-        name: movieId
+        name: id
         required: true
         type: integer
-      - description: Updated movie details
-        in: body
-        name: movie
-        required: true
-        schema:
-          $ref: '#/definitions/models.MovieUpdateRequest'
+      - description: Movie title
+        in: formData
+        name: title
+        type: string
+      - description: Movie description
+        in: formData
+        name: description
+        type: string
+      - description: Release date (YYYY-MM-DD)
+        in: formData
+        name: release_date
+        type: string
+      - description: Poster image
+        in: formData
+        name: poster
+        type: file
+      - description: Backdrop image
+        in: formData
+        name: backdrop
+        type: file
+      - collectionFormat: csv
+        description: Genre IDs (comma separated)
+        in: formData
+        items:
+          type: integer
+        name: genre_ids
+        type: array
+      - collectionFormat: csv
+        description: Cast IDs (comma separated)
+        in: formData
+        items:
+          type: integer
+        name: cast_ids
+        type: array
       produces:
       - application/json
       responses:
@@ -455,12 +465,39 @@ paths:
       - ApiKeyAuth: []
       summary: Update a movie (Admin only)
       tags:
-      - Admin/Movies
+      - Admin
+  /logout:
+    post:
+      description: Logout user by blacklisting the current JWT token in Redis
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Authorization header missing or malformed
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Logout failed due to server error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Logout user
+      tags:
+      - Users
   /movies:
     get:
       consumes:
       - application/json
-      description: Retrieves a paginated list of all movies
+      description: Retrieves a paginated list of all movies, with optional filters
+        by title and genre
       parameters:
       - description: Page number (default 1)
         in: query
@@ -470,6 +507,14 @@ paths:
         in: query
         name: limit
         type: integer
+      - description: Movie title to filter by
+        in: query
+        name: title
+        type: string
+      - description: Genre name to filter by
+        in: query
+        name: genre
+        type: string
       produces:
       - application/json
       responses:
@@ -485,7 +530,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.Response'
-      summary: Get all movies with pagination
+      summary: Get all movies with pagination and optional filtering
       tags:
       - Movies
   /movies/:movieId:
@@ -570,7 +615,7 @@ paths:
         name: order
         required: true
         schema:
-          $ref: '#/definitions/models.CreateOrderRequest'
+          $ref: '#/definitions/models.Order'
       produces:
       - application/json
       responses:
@@ -720,39 +765,6 @@ paths:
       summary: Get all schedules
       tags:
       - Schedules
-  /schedules/movie/{id}:
-    get:
-      consumes:
-      - application/json
-      description: Get all schedules for a specific movie by ID
-      parameters:
-      - description: Movie ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.ResponseScheduleByMovie'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/models.Response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/models.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/models.Response'
-      summary: Get schedules by movie ID
-      tags:
-      - Schedules
   /seats/:scheduleId/available:
     get:
       consumes:
@@ -780,39 +792,6 @@ paths:
           schema:
             $ref: '#/definitions/models.Response'
       summary: Get available seats
-      tags:
-      - Seats
-  /seats/:seatId:
-    get:
-      consumes:
-      - application/json
-      description: Get a single seat by its ID
-      parameters:
-      - description: Seat ID
-        in: path
-        name: seatId
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/models.SeatStruct'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/models.Response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/models.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/models.Response'
-      summary: Get seat by ID
       tags:
       - Seats
   /users/{id}:
@@ -844,22 +823,36 @@ paths:
       summary: Get profile by ID
       tags:
       - Users
-    put:
+    patch:
       consumes:
-      - application/json
-      description: Update a user's profile information by ID
+      - multipart/form-data
+      description: Update user profile data including optional profile image and password
       parameters:
       - description: User ID
         in: path
         name: id
         required: true
         type: integer
-      - description: Updated profile information
-        in: body
-        name: profile
-        required: true
-        schema:
-          $ref: '#/definitions/models.Profile'
+      - description: Full name
+        in: formData
+        name: fullname
+        type: string
+      - description: Email
+        in: formData
+        name: email
+        type: string
+      - description: New password
+        in: formData
+        name: password
+        type: string
+      - description: Old password (required if changing password)
+        in: formData
+        name: old_password
+        type: string
+      - description: Profile image file
+        in: formData
+        name: profile_image
+        type: file
       produces:
       - application/json
       responses:
@@ -879,6 +872,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/models.Response'
+      security:
+      - ApiKeyAuth: []
       summary: Update user profile
       tags:
       - Users

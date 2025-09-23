@@ -30,7 +30,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Admin/Movies"
+                    "Admin"
                 ],
                 "summary": "Get all movies (Admin only)",
                 "responses": {
@@ -47,42 +47,180 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/admin/movies/:movieId": {
-            "put": {
+            },
+            "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Updates a movie's details by its ID (admin only)",
+                "description": "Creates a new movie with details, poster, and backdrop",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Admin/Movies"
+                    "Admin"
+                ],
+                "summary": "Create a new movie (Admin only)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Movie title",
+                        "name": "title",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Movie description",
+                        "name": "description",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Release date (YYYY-MM-DD)",
+                        "name": "release_date",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Poster image",
+                        "name": "poster",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Backdrop image",
+                        "name": "backdrop",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Genre IDs (comma separated)",
+                        "name": "genre_ids",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Cast IDs (comma separated)",
+                        "name": "cast_ids",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/models.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/movies/{id}": {
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Updates movie details, poster, and backdrop",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
                 ],
                 "summary": "Update a movie (Admin only)",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "Movie ID",
-                        "name": "movieId",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     },
                     {
-                        "description": "Updated movie details",
-                        "name": "movie",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.MovieUpdateRequest"
-                        }
+                        "type": "string",
+                        "description": "Movie title",
+                        "name": "title",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Movie description",
+                        "name": "description",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Release date (YYYY-MM-DD)",
+                        "name": "release_date",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Poster image",
+                        "name": "poster",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Backdrop image",
+                        "name": "backdrop",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Genre IDs (comma separated)",
+                        "name": "genre_ids",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Cast IDs (comma separated)",
+                        "name": "cast_ids",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -111,56 +249,43 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "delete": {
+            }
+        },
+        "/logout": {
+            "post": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "BearerAuth": []
                     }
                 ],
-                "description": "Deletes a movie from the database by its ID (admin only)",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Logout user by blacklisting the current JWT token in Redis",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Admin/Movies"
+                    "Users"
                 ],
-                "summary": "Delete a movie (Admin only)",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Movie ID",
-                        "name": "movieId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
+                "summary": "Logout user",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Logout successful",
                         "schema": {
-                            "$ref": "#/definitions/models.Response"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "401": {
+                        "description": "Authorization header missing or malformed",
                         "schema": {
-                            "$ref": "#/definitions/models.Response"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/models.Response"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Logout failed due to server error",
                         "schema": {
-                            "$ref": "#/definitions/models.Response"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -168,7 +293,7 @@ const docTemplate = `{
         },
         "/movies": {
             "get": {
-                "description": "Retrieves a paginated list of all movies",
+                "description": "Retrieves a paginated list of all movies, with optional filters by title and genre",
                 "consumes": [
                     "application/json"
                 ],
@@ -178,7 +303,7 @@ const docTemplate = `{
                 "tags": [
                     "Movies"
                 ],
-                "summary": "Get all movies with pagination",
+                "summary": "Get all movies with pagination and optional filtering",
                 "parameters": [
                     {
                         "type": "integer",
@@ -190,6 +315,18 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Number of items per page (default 10)",
                         "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Movie title to filter by",
+                        "name": "title",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Genre name to filter by",
+                        "name": "genre",
                         "in": "query"
                     }
                 ],
@@ -343,7 +480,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CreateOrderRequest"
+                            "$ref": "#/definitions/models.Order"
                         }
                     }
                 ],
@@ -569,56 +706,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/schedules/movie/{id}": {
-            "get": {
-                "description": "Get all schedules for a specific movie by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Schedules"
-                ],
-                "summary": "Get schedules by movie ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Movie ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.ResponseScheduleByMovie"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/models.Response"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/models.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/models.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/seats/:scheduleId/available": {
             "get": {
                 "description": "Get a list of available seats for a specific schedule",
@@ -650,56 +737,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/models.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/models.Response"
-                        }
-                    }
-                }
-            }
-        },
-        "/seats/:seatId": {
-            "get": {
-                "description": "Get a single seat by its ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Seats"
-                ],
-                "summary": "Get seat by ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Seat ID",
-                        "name": "seatId",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/models.SeatStruct"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/models.Response"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/models.Response"
                         }
@@ -860,10 +897,15 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
-                "description": "Update a user's profile information by ID",
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Update user profile data including optional profile image and password",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -881,13 +923,34 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "description": "Updated profile information",
-                        "name": "profile",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Profile"
-                        }
+                        "type": "string",
+                        "description": "Full name",
+                        "name": "fullname",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Email",
+                        "name": "email",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "New password",
+                        "name": "password",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Old password (required if changing password)",
+                        "name": "old_password",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Profile image file",
+                        "name": "profile_image",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -937,6 +1000,17 @@ const docTemplate = `{
                 }
             }
         },
+        "models.Cast": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "models.Cinema": {
             "type": "object",
             "properties": {
@@ -948,45 +1022,14 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CreateOrderRequest": {
+        "models.Genre": {
             "type": "object",
-            "required": [
-                "email",
-                "full_name",
-                "payment_id",
-                "phone_number",
-                "schedule_id",
-                "seats_code",
-                "total_price",
-                "users_id"
-            ],
             "properties": {
-                "email": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
                     "type": "string"
-                },
-                "full_name": {
-                    "type": "string"
-                },
-                "payment_id": {
-                    "type": "integer"
-                },
-                "phone_number": {
-                    "type": "string"
-                },
-                "schedule_id": {
-                    "type": "integer"
-                },
-                "seats_code": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "total_price": {
-                    "type": "integer"
-                },
-                "users_id": {
-                    "type": "integer"
                 }
             }
         },
@@ -1022,9 +1065,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "cast": {
+                    "description": "Updated to use the new Cast struct",
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/models.Cast"
                     }
                 },
                 "director": {
@@ -1034,9 +1078,10 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "genre": {
+                    "description": "Updated to use the new Genre struct",
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "$ref": "#/definitions/models.Genre"
                     }
                 },
                 "id": {
@@ -1080,6 +1125,9 @@ const docTemplate = `{
                 "genres"
             ],
             "properties": {
+                "archived_at": {
+                    "type": "string"
+                },
                 "backdrop_path": {
                     "type": "string"
                 },
@@ -1130,32 +1178,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.MovieUpdateRequest": {
-            "type": "object",
-            "properties": {
-                "backdrop_path": {
-                    "type": "string"
-                },
-                "director_id": {
-                    "type": "integer"
-                },
-                "duration": {
-                    "type": "integer"
-                },
-                "poster_path": {
-                    "type": "string"
-                },
-                "release_date": {
-                    "type": "string"
-                },
-                "synopsis": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                }
-            }
-        },
         "models.Order": {
             "type": "object",
             "properties": {
@@ -1174,7 +1196,7 @@ const docTemplate = `{
                 "ispaid": {
                     "type": "boolean"
                 },
-                "payment_id": {
+                "payment_method_id": {
                     "type": "integer"
                 },
                 "phone_number": {
@@ -1182,6 +1204,12 @@ const docTemplate = `{
                 },
                 "schedule_id": {
                     "type": "integer"
+                },
+                "seats_code": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "total_price": {
                     "type": "integer"
@@ -1209,9 +1237,6 @@ const docTemplate = `{
                 "movie": {
                     "$ref": "#/definitions/models.Movie"
                 },
-                "order_id": {
-                    "type": "integer"
-                },
                 "schedule": {
                     "$ref": "#/definitions/models.Schedule"
                 },
@@ -1222,6 +1247,9 @@ const docTemplate = `{
                     }
                 },
                 "total_price": {
+                    "type": "integer"
+                },
+                "users_id": {
                     "type": "integer"
                 }
             }
@@ -1297,29 +1325,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.Profile": {
-            "type": "object",
-            "properties": {
-                "Profile_image": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "last_name": {
-                    "type": "string"
-                },
-                "phone_number": {
-                    "type": "string"
-                },
-                "point": {
-                    "type": "integer"
-                },
-                "users_id": {
-                    "type": "integer"
-                }
-            }
-        },
         "models.Response": {
             "type": "object",
             "properties": {
@@ -1346,23 +1351,6 @@ const docTemplate = `{
             }
         },
         "models.ResponseSchedule": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.ScheduleDetails"
-                    }
-                },
-                "message": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.ResponseScheduleByMovie": {
             "type": "object",
             "properties": {
                 "data": {
@@ -1439,7 +1427,8 @@ const docTemplate = `{
         "models.UsersStruct": {
             "type": "object",
             "required": [
-                "email"
+                "email",
+                "password"
             ],
             "properties": {
                 "email": {
