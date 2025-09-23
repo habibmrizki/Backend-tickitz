@@ -1,0 +1,66 @@
+INSERT INTO public.order_seats (orders_id,seats_id) VALUES
+	 (1,1),
+	 (1,2),
+	 (1,3),
+	 (1,4),
+	 (1,5),
+	 (1,15),
+	 (1,16),
+	 (1,17),
+	 (1,76),
+	 (1,21);
+INSERT INTO public.order_seats (orders_id,seats_id) VALUES
+	 (2,1),
+	 (2,2),
+	 (2,3),
+	 (2,4),
+	 (2,5),
+	 (2,15),
+	 (2,16),
+	 (2,17),
+	 (2,76),
+	 (2,21);
+INSERT INTO public.order_seats (orders_id,seats_id) VALUES
+	 (3,1),
+	 (3,2),
+	 (3,3),
+	 (3,4),
+	 (3,5),
+	 (3,15),
+	 (3,16),
+	 (3,17),
+	 (3,21),
+	 (3,76);
+INSERT INTO public.order_seats (orders_id,seats_id) VALUES
+	 (4,1),
+	 (4,2),
+	 (4,3),
+	 (4,4),
+	 (4,5),
+	 (4,15),
+	 (4,16),
+	 (4,17),
+	 (4,21),
+	 (4,76);
+INSERT INTO public.order_seats (orders_id,seats_id) VALUES
+	 (5,1),
+	 (5,2),
+	 (5,3),
+	 (5,4),
+	 (5,5),
+	 (5,15),
+	 (5,16),
+	 (5,17),
+	 (5,21),
+	 (5,76);
+INSERT INTO public.order_seats (orders_id,seats_id) VALUES
+	 (6,1),
+	 (6,2),
+	 (6,3),
+	 (6,4),
+	 (6,5),
+	 (6,15),
+	 (6,16),
+	 (6,17),
+	 (6,21),
+	 (6,76);

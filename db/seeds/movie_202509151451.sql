@@ -1,0 +1,14 @@
+INSERT INTO public.movie (director_id,title,synopsis,modified_at,popularity,backdrop_path,poster_path,duration,release_date,created_at,update_at,archived_at) VALUES
+	 (1,'War of the Worlds','Will Radford is a top analyst for Homeland Security...',NULL,655,'/iZLqwEwUViJdSkGVjePGhxYzbDb.jpg','/yvirUYrva23IudARHn3mMGVxWqM.jpg',NULL,'2025-07-29',NULL,NULL,NULL),
+	 (2,'Nobody 2','Former assassin Hutch Mansell...',NULL,466,'/mEW9XMgYDO6U0MJcIRqRuSwjzN5.jpg','/svXVRoRSu6zzFtCzkRsjZS7Lqpd.jpg',89,'2025-08-13',NULL,NULL,NULL),
+	 (3,'The Naked Gun','Only one man has the particular set of skills...',NULL,443,'/1wi1hcbl6KYqARjdQ4qrBWZdiau.jpg','/aq0JMbmSfPwG8JvAzExJPrBHqmG.jpg',NULL,'2025-07-30',NULL,NULL,NULL),
+	 (4,'The Conjuring: Last Rites','Paranormal investigators Ed and Lorraine Warren...',NULL,343,'/fq8gLtrz1ByW3KQ2IM3RMZEIjsQ.jpg','/8XfIKOPmuCZLh5ooK13SPKeybWF.jpg',NULL,'2025-09-03',NULL,NULL,NULL),
+	 (5,'F1','Racing legend Sonny Hayes...',NULL,326,'/ZtcGMc204JsNqfjS9lU6udRgpo.jpg','/9PXZIUsSDh4alB80jheWX4fhZmy.jpg',NULL,'2025-06-25',NULL,NULL,NULL),
+	 (6,'Superman','Superman, a journalist in Metropolis...',NULL,306,'/eU7IfdWq8KQy0oNd4kKXS0QUR08.jpg','/ombsmhYUqR4qqOLOxAyr5V8hbyv.jpg',NULL,'2025-07-09',NULL,NULL,NULL),
+	 (7,'Demon Slayer: Kimetsu no Yaiba Infinity Castle','The Demon Slayer Corps...',NULL,263,'/1RgPyOhN4DRs225BGTlHJqCudII.jpg','/aFRDH3P7TX61FVGpaLhKr6QiOC1.jpg',155,'2025-07-18',NULL,NULL,NULL),
+	 (8,'Mission: Impossible - The Final Reckoning','Ethan Hunt and team...',NULL,249,'/538U9snNc2fpnOmYXAPUh3zn31H.jpg','/z53D2EAOxGRqdr7KXXWp9dJiDe.jpg',NULL,'2025-05-17',NULL,NULL,NULL),
+	 (7,'A Line of Fire','After working as a secret agent in the FBI for ten years, Jack ''Cash'' Conry left it all behind after his wife passed in order to dedicate himself to his two daughters. Despite a fulfilling life at home, Cash misses the chance to make an impact and has been considering a return to the force. The decision is made for him when his old partner’s niece Jamie calls him for help, launching Cash right back into a world of danger, corruption and intrigue.',NULL,245,'/z8tNyAAnGk2d1XmO1L4i34UmP19.jpg','/jSG2mg1998DUAam6X9EA6SeJmqD.jpg',NULL,'2025-04-05',NULL,NULL,NULL),
+	 (9,'barbie kuamalsara','dudusng anak jagoan',NULL,100,'/habib.jpeg','/public/images/poster_17_1757880549594003271.png',31100,'2025-09-29','2025-09-13 08:46:03.107141','2025-09-14 20:09:09.59465');
+INSERT INTO public.movie (director_id,title,synopsis,modified_at,popularity,backdrop_path,poster_path,duration,release_date,created_at,update_at) VALUES
+	 (1,'barbie kuamalsara','Phalawan pada masanya',NULL,80,'/public/images/backdrop_20250914181628.png','/public/images/poster_18_1757880619749214138.png',150,'2025-09-08','2025-09-14 11:16:28.680483','2025-09-14 20:10:19.750327',NULL),
+	 (1,'Keluarga Somad yang gaasdfasdfasdfnteneg','duasdfsadfdung',NULL,100,'new-backdrop.jpg','new-poster.jpg',150,'2025-09-08',NULL,'2025-09-14 15:54:25.549511',NULL);
