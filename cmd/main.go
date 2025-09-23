@@ -20,7 +20,7 @@ func main() {
 	// yang di returnkan itu func main nya makanay backend tikda bisa berjalan
 	if err := godotenv.Load(); err != nil {
 		log.Println("Failed to load env\nCause: ", err.Error())
-		// return
+		return
 	}
 	log.Println(os.Getenv("DBUSERS"))
 	log.Println(os.Getenv("JWT_SECRET"))
