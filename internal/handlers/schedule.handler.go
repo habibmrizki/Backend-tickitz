@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/habibmrizki/back-end-tickitz/internal/models"
 	"github.com/habibmrizki/back-end-tickitz/internal/repositories"
-	"github.com/jackc/pgx/v5"
 )
 
 // ScheduleHandler adalah handler untuk semua rute jadwal
@@ -41,9 +40,35 @@ func (s *ScheduleHandler) GetAllSchedules(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, models.ResponseSchedule{
+	ctx.JSON(http.StatusOK, models.ResponseScheduleByMovie{
 		Status:  "berhasil",
 		Message: "successfully fetched all schedules",
+		Data:    schedules,
+	})
+}
+
+func (s *ScheduleHandler) GetSchedulesByMovieID(ctx *gin.Context) {
+	movieID, err := strconv.Atoi(ctx.Param("movieId"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, models.Response{
+			Status:  "gagal",
+			Message: "invalid movie ID",
+		})
+		return
+	}
+
+	schedules, err := s.scheduleRepo.GetSchedulesByMovieID(ctx.Request.Context(), movieID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, models.Response{
+			Status:  "gagal",
+			Message: "failed to get schedules",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, models.ResponseScheduleByMovie{
+		Status:  "berhasil",
+		Message: "successfully fetched schedules",
 		Data:    schedules,
 	})
 }
@@ -60,38 +85,38 @@ func (s *ScheduleHandler) GetAllSchedules(ctx *gin.Context) {
 // @failure                 400 {object} models.Response
 // @failure                 404 {object} models.Response
 // @failure                 500 {object} models.Response
-func (s *ScheduleHandler) GetScheduleByMovieId(ctx *gin.Context) {
-	paramId := ctx.Param("id")
-	movieID, err := strconv.Atoi(paramId)
-	if err != nil {
-		log.Println("[ERROR] : ", err.Error())
-		ctx.JSON(http.StatusBadRequest, models.Response{
-			Status:  "gagal",
-			Message: "invalid movie ID",
-		})
-		return
-	}
+// func (s *ScheduleHandler) GetScheduleByMovieId(ctx *gin.Context) {
+// 	paramId := ctx.Param("id")
+// 	movieID, err := strconv.Atoi(paramId)
+// 	if err != nil {
+// 		log.Println("[ERROR] : ", err.Error())
+// 		ctx.JSON(http.StatusBadRequest, models.Response{
+// 			Status:  "gagal",
+// 			Message: "invalid movie ID",
+// 		})
+// 		return
+// 	}
 
-	schedules, err := s.scheduleRepo.GetScheduleByMovieId(ctx.Request.Context(), movieID)
-	if err != nil {
-		log.Println("[ERROR] : ", err.Error())
-		if err == pgx.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, models.Response{
-				Status:  "gagal",
-				Message: "no schedules found for this movie",
-			})
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, models.Response{
-			Status:  "gagal",
-			Message: "failed to get schedules",
-		})
-		return
-	}
+// 	schedules, err := s.scheduleRepo.GetScheduleByMovieId(ctx.Request.Context(), movieID)
+// 	if err != nil {
+// 		log.Println("[ERROR] : ", err.Error())
+// 		if err == pgx.ErrNoRows {
+// 			ctx.JSON(http.StatusNotFound, models.Response{
+// 				Status:  "gagal",
+// 				Message: "no schedules found for this movie",
+// 			})
+// 			return
+// 		}
+// 		ctx.JSON(http.StatusInternalServerError, models.Response{
+// 			Status:  "gagal",
+// 			Message: "failed to get schedules",
+// 		})
+// 		return
+// 	}
 
-	ctx.JSON(http.StatusOK, models.ResponseScheduleByMovie{
-		Status:  "berhasil",
-		Message: "successfully fetched schedules for the movie",
-		Data:    schedules,
-	})
-}
+// 	ctx.JSON(http.StatusOK, models.ResponseScheduleByMovie{
+// 		Status:  "berhasil",
+// 		Message: "successfully fetched schedules for the movie",
+// 		Data:    schedules,
+// 	})
+// }
