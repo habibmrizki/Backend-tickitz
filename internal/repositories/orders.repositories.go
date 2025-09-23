@@ -134,13 +134,103 @@ func NewOrderRepository(db *pgxpool.Pool) *OrderRepository {
 }
 
 // CreateOrder membuat order baru, seat yang dipilih, dan menambahkan poin ke profil pengguna
-func (o *OrderRepository) CreateOrder(ctx context.Context, orderData models.CreateOrderRequest) (models.Order, error) {
+// func (o *OrderRepository) CreateOrder(ctx context.Context, orderData models.Order) (models.Order, error) {
+// 	// Mulai transaksi untuk memastikan semua operasi atomic
+// 	tx, err := o.db.Begin(ctx)
+// 	if err != nil {
+// 		log.Println("[ERROR] : ", err.Error())
+// 		return models.Order{}, err
+// 	}
+// 	defer tx.Rollback(ctx)
+
+// 	// Persiapkan data untuk tabel 'orders'
+// 	newOrder := models.Order{
+// 		IDUsers:     orderData.IDUsers,
+// 		IDSchedule:  orderData.IDSchedule,
+// 		IDPayment:   orderData.IDPayment,
+// 		FullName:    orderData.FullName,
+// 		Email:       orderData.Email,
+// 		PhoneNumber: orderData.PhoneNumber,
+// 		TotalPrice:  orderData.TotalPrice,
+// 		IsPaid:      false,
+// 		CreatedAt:   time.Now(),
+// 		UpdatedAt:   time.Now(),
+// 	}
+
+// 	// 1. Insert data ke tabel 'orders'
+// 	queryOrders := `
+// 		INSERT INTO orders (users_id, schedule_id, payment_method_id, total_price, ispaid, created_at, update_at, full_name, email, phone_number)
+// 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+// 		RETURNING id`
+
+// 	err = tx.QueryRow(ctx, queryOrders,
+// 		newOrder.IDUsers,
+// 		newOrder.IDSchedule,
+// 		newOrder.IDPayment,
+// 		newOrder.TotalPrice,
+// 		newOrder.IsPaid,
+// 		newOrder.CreatedAt,
+// 		newOrder.UpdatedAt,
+// 		newOrder.FullName,
+// 		newOrder.Email,
+// 		newOrder.PhoneNumber).Scan(&newOrder.ID)
+// 	if err != nil {
+// 		log.Println("[ERROR] : ", err.Error())
+// 		return models.Order{}, err
+// 	}
+
+// 	// 2. Ambil ID kursi dari kode kursi (seats_code)
+// 	var seatsID []int
+// 	for _, seatCode := range orderData.SeatsCode {
+// 		var seatID int
+// 		err := tx.QueryRow(ctx, "SELECT id FROM seats WHERE seats_code = $1", seatCode).Scan(&seatID)
+// 		if err != nil {
+// 			if err == pgx.ErrNoRows {
+// 				return models.Order{}, errors.New("seat with code " + seatCode + " not found")
+// 			}
+// 			log.Println("[ERROR] : ", err.Error())
+// 			return models.Order{}, err
+// 		}
+// 		seatsID = append(seatsID, seatID)
+// 	}
+
+// 	// 3. Insert data ke tabel 'order_seats'
+// 	queryOrderSeats := `
+// 		INSERT INTO order_seats (orders_id, seats_id)
+// 		VALUES ($1, $2)`
+
+// 	for _, seatID := range seatsID {
+// 		_, err := tx.Exec(ctx, queryOrderSeats, newOrder.ID, seatID)
+// 		if err != nil {
+// 			log.Println("[ERROR] : ", err.Error())
+// 			return models.Order{}, err
+// 		}
+// 	}
+
+// 	// 4. Update poin di tabel 'profile'
+// 	queryUpdatePoints := `
+// 		UPDATE profile
+// 		SET point = point + 50
+// 		WHERE users_id = $1`
+
+// 	_, err = tx.Exec(ctx, queryUpdatePoints, newOrder.IDUsers)
+// 	if err != nil {
+// 		log.Println("[ERROR] : ", err.Error())
+// 		return models.Order{}, err
+// 	}
+
+// 	// Commit transaksi jika semua operasi berhasil
+// 	return newOrder, tx.Commit(ctx)
+// }
+
+func (o *OrderRepository) CreateOrder(ctx context.Context, orderData models.Order) (models.Order, error) {
 	// Mulai transaksi untuk memastikan semua operasi atomic
 	tx, err := o.db.Begin(ctx)
 	if err != nil {
-		log.Println("[ERROR] : ", err.Error())
+		log.Println("[ERROR]: Gagal memulai transaksi:", err.Error())
 		return models.Order{}, err
 	}
+	// Gunakan defer untuk Rollback agar transaksi dibatalkan jika ada kegagalan
 	defer tx.Rollback(ctx)
 
 	// Persiapkan data untuk tabel 'orders'
@@ -157,7 +247,7 @@ func (o *OrderRepository) CreateOrder(ctx context.Context, orderData models.Crea
 		UpdatedAt:   time.Now(),
 	}
 
-	// 1. Insert data ke tabel 'orders'
+	// 1. Insert data ke tabel 'orders' dan ambil ID yang baru dibuat
 	queryOrders := `
 		INSERT INTO orders (users_id, schedule_id, payment_method_id, total_price, ispaid, created_at, update_at, full_name, email, phone_number)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -175,36 +265,46 @@ func (o *OrderRepository) CreateOrder(ctx context.Context, orderData models.Crea
 		newOrder.Email,
 		newOrder.PhoneNumber).Scan(&newOrder.ID)
 	if err != nil {
-		log.Println("[ERROR] : ", err.Error())
+		log.Println("[ERROR]: Gagal memasukkan order:", err.Error())
 		return models.Order{}, err
 	}
 
-	// 2. Ambil ID kursi dari kode kursi (seats_code)
+	// 2. Ambil ID kursi dari kode kursi (seats_code) secara massal
+	querySeatsID := `
+		SELECT id FROM seats WHERE seats_code = ANY($1)`
+
+	rows, err := tx.Query(ctx, querySeatsID, orderData.SeatsCode)
+	if err != nil {
+		log.Println("[ERROR]: Gagal mengambil ID kursi:", err.Error())
+		return models.Order{}, err
+	}
+	defer rows.Close()
+
 	var seatsID []int
-	for _, seatCode := range orderData.SeatsCode {
+	for rows.Next() {
 		var seatID int
-		err := tx.QueryRow(ctx, "SELECT id FROM seats WHERE seats_code = $1", seatCode).Scan(&seatID)
-		if err != nil {
-			if err == pgx.ErrNoRows {
-				return models.Order{}, errors.New("seat with code " + seatCode + " not found")
-			}
-			log.Println("[ERROR] : ", err.Error())
+		if err := rows.Scan(&seatID); err != nil {
+			log.Println("[ERROR]: Gagal memindai ID kursi:", err.Error())
 			return models.Order{}, err
 		}
 		seatsID = append(seatsID, seatID)
 	}
 
-	// 3. Insert data ke tabel 'order_seats'
+	// Cek apakah semua kursi yang diminta ditemukan
+	if len(seatsID) != len(orderData.SeatsCode) {
+		log.Println("[ERROR]: Satu atau lebih kursi tidak ditemukan")
+		return models.Order{}, errors.New("one or more seats not found")
+	}
+
+	// 3. Insert data ke tabel 'order_seats' secara massal
 	queryOrderSeats := `
 		INSERT INTO order_seats (orders_id, seats_id)
-		VALUES ($1, $2)`
+		SELECT $1, unnest($2::int[])`
 
-	for _, seatID := range seatsID {
-		_, err := tx.Exec(ctx, queryOrderSeats, newOrder.ID, seatID)
-		if err != nil {
-			log.Println("[ERROR] : ", err.Error())
-			return models.Order{}, err
-		}
+	_, err = tx.Exec(ctx, queryOrderSeats, newOrder.ID, seatsID)
+	if err != nil {
+		log.Println("[ERROR]: Gagal memasukkan order seats:", err.Error())
+		return models.Order{}, err
 	}
 
 	// 4. Update poin di tabel 'profile'
@@ -215,7 +315,7 @@ func (o *OrderRepository) CreateOrder(ctx context.Context, orderData models.Crea
 
 	_, err = tx.Exec(ctx, queryUpdatePoints, newOrder.IDUsers)
 	if err != nil {
-		log.Println("[ERROR] : ", err.Error())
+		log.Println("[ERROR]: Gagal memperbarui poin pengguna:", err.Error())
 		return models.Order{}, err
 	}
 
@@ -235,7 +335,7 @@ func (o *OrderRepository) GetOrderHistory(ctx context.Context, userID int) ([]mo
             t.time AS show_time,
             m.title AS movie_title,
             m.poster_path AS movie_image,
-            ci.name AS cinema_name,  -- INI PERBAIKANNYA
+            ci.name AS cinema_name,
             l.location AS cinema_location
         FROM orders AS o
         JOIN schedule AS s ON o.schedule_id = s.id
