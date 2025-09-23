@@ -3,10 +3,13 @@ package repositories
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
+	"strings"
 	"time" // Tambahkan import ini
 
 	"github.com/habibmrizki/back-end-tickitz/internal/models"
+	"github.com/habibmrizki/back-end-tickitz/pkg"
 
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -71,6 +74,7 @@ func (u *UserRepository) UserRegister(ctx context.Context, email string, passwor
 func (u *UserRepository) GetUserByEmail(ctx context.Context, email string) (models.UsersStruct, error) {
 	sql := "SELECT id, email, password, role FROM users WHERE email = $1"
 
+	log.Println(email)
 	var user models.UsersStruct
 	// Scan digunakan untuk membaca hasil dari QueryRow yang hasilnya akan di masukkan ke dalam variable
 	if err := u.db.QueryRow(ctx, sql, email).Scan(&user.Id, &user.Email, &user.Password, &user.Role); err != nil {
@@ -134,35 +138,117 @@ func (u *UserRepository) GetProfileById(ctx context.Context, idInt int) (models.
 	return profile, nil
 }
 
-func (u *UserRepository) UpdateProfile(ctx context.Context, id int, firstName string, lastName string, phoneNumber string, profileImage string) error {
+func (u *UserRepository) UpdateProfile(ctx context.Context, id int, req *models.UpdateProfileRequest, profileImagePath string) (*models.Profile, error) {
 	tx, err := u.db.Begin(ctx)
 	if err != nil {
-		log.Println("[ERROR] : ", err.Error())
-		return err
+		return nil, err
 	}
-
 	defer tx.Rollback(ctx)
 
-	// Periksa apakah pengguna dengan ID tersebut ada di tabel 'users'
-	var usersID int
-	err = tx.QueryRow(ctx, "SELECT id FROM users WHERE id = $1", id).Scan(&usersID)
-	if err != nil {
+	// cek user ada
+	var exists int
+	if err := tx.QueryRow(ctx, "SELECT id FROM users WHERE id = $1", id).Scan(&exists); err != nil {
 		if err == pgx.ErrNoRows {
-			return errors.New("user not found")
+			return nil, errors.New("user not found")
 		}
-		log.Println("[ERROR] : ", err.Error())
-		return err
+		return nil, err
 	}
 
-	// Lakukan pembaruan di tabel 'profile'
-	query := `UPDATE profile SET first_name = $1, last_name = $2, phone_number = $3, profile_image = $4 WHERE users_id = $5`
+	// build query dinamis untuk tabel profile
+	setParts := []string{}
+	args := []interface{}{}
+	argID := 1
 
-	// exec menjalanka perintah sebuah sql yang dimana memodifikasi data dan berjalan secara atomik (semua gagal atau semua berhasil)
-	_, err = tx.Exec(ctx, query, firstName, lastName, phoneNumber, profileImage, id)
-	if err != nil {
-		log.Println("[ERROR] : ", err.Error())
-		return err
+	if req.Firstname != nil {
+		setParts = append(setParts, fmt.Sprintf("first_name = $%d", argID))
+		args = append(args, *req.Firstname)
+		argID++
+	}
+	if req.Lastname != nil {
+		setParts = append(setParts, fmt.Sprintf("last_name = $%d", argID))
+		args = append(args, *req.Lastname)
+		argID++
+	}
+	if req.PhoneNumber != nil {
+		setParts = append(setParts, fmt.Sprintf("phone_number = $%d", argID))
+		args = append(args, *req.PhoneNumber)
+		argID++
+	}
+	if profileImagePath != "" {
+		setParts = append(setParts, fmt.Sprintf("profile_image = $%d", argID))
+		args = append(args, profileImagePath)
+		argID++
 	}
 
-	return tx.Commit(ctx)
+	if len(setParts) > 0 {
+		query := fmt.Sprintf(`UPDATE profile SET %s WHERE users_id = $%d`, strings.Join(setParts, ", "), argID)
+		args = append(args, id)
+
+		if _, err := tx.Exec(ctx, query, args...); err != nil {
+			return nil, err
+		}
+	}
+
+	// update password kalau dikirim
+	if req.Password != nil && *req.Password != "" {
+		if req.OldPassword == nil || *req.OldPassword == "" {
+			return nil, errors.New("old password is required to change password")
+		}
+
+		// ambil password lama dari DB
+		var currentHashed string
+		if err := tx.QueryRow(ctx, "SELECT password FROM users WHERE id = $1", id).Scan(&currentHashed); err != nil {
+			return nil, err
+		}
+
+		// cek old password valid
+		hashConfig := pkg.NewHashConfig()
+		hashConfig.UseRecommended()
+		match, _ := hashConfig.CompareHashAndPassword(*req.OldPassword, currentHashed)
+		if !match {
+			return nil, errors.New("invalid old password")
+		}
+
+		// hash password baru
+		hashedPassword, err := hashConfig.GenHash(*req.Password)
+		if err != nil {
+			return nil, err
+		}
+
+		// update DB
+		if _, err := tx.Exec(ctx,
+			"UPDATE users SET password = $1, update_at = $2 WHERE id = $3",
+			hashedPassword, time.Now(), id,
+		); err != nil {
+			return nil, err
+		}
+	}
+
+	// Ambil data profil terbaru setelah update
+
+	var updatedProfile models.Profile
+	query := `
+	SELECT p.users_id, p.first_name, p.last_name, p.phone_number, 
+	       p.profile_image, p.point, u.email
+	FROM profile p
+	JOIN users u ON p.users_id = u.id
+	WHERE p.users_id = $1
+`
+	if err := tx.QueryRow(ctx, query, id).Scan(
+		&updatedProfile.User_Id,
+		&updatedProfile.Firstname,
+		&updatedProfile.Lastname,
+		&updatedProfile.PhoneNumber,
+		&updatedProfile.ProfileImage,
+		&updatedProfile.Point,
+		&updatedProfile.Email,
+	); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+
+	return &updatedProfile, nil
 }
