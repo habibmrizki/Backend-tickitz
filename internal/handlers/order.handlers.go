@@ -84,15 +84,15 @@ func NewOrderHandlers(orderRepo *repositories.OrderRepository) *OrderHandler {
 // @router                  /orders [post]
 // @Description             Create a new movie ticket order
 // @Tags                    Orders
-// @Param                   order body models.CreateOrderRequest true "Order data"
+// @Param                   order body models.Order true "Order data"
 // @accept                  json
 // @produce                 json
 // @success                 201 {object} models.ResponseCreateOrder
 // @failure                 400 {object} models.Response
 // @failure                 500 {object} models.Response
 func (o *OrderHandler) CreateOrder(ctx *gin.Context) {
-	var requestBody models.CreateOrderRequest
-	if err := ctx.ShouldBindJSON(&requestBody); err != nil {
+	var requestBody models.Order
+	if err := ctx.ShouldBind(&requestBody); err != nil {
 		log.Println("[ERROR] : ", err.Error())
 		ctx.JSON(http.StatusBadRequest, models.Response{
 			Status:  "gagal",
@@ -104,12 +104,24 @@ func (o *OrderHandler) CreateOrder(ctx *gin.Context) {
 	order, err := o.orderRepo.CreateOrder(ctx.Request.Context(), requestBody)
 	if err != nil {
 		log.Println("[ERROR] : ", err.Error())
+		// Mengembalikan pesan error dari repository jika spesifik
+		if err.Error() == "one or more seats not found" {
+			ctx.JSON(http.StatusBadRequest, models.Response{
+				Status:  "gagal",
+				Message: "Kursi yang dipilih tidak valid",
+			})
+			return
+		}
+
 		ctx.JSON(http.StatusInternalServerError, models.Response{
 			Status:  "gagal",
-			Message: "failed to create order",
+			Message: "Gagal membuat order",
 		})
 		return
 	}
+
+	// Tambahkan SeatsCode ke dalam objek 'order' sebelum mengirim respons.
+	order.SeatsCode = requestBody.SeatsCode
 
 	ctx.JSON(http.StatusCreated, models.ResponseCreateOrder{
 		Status:  "berhasil",
