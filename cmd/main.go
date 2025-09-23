@@ -17,9 +17,10 @@ import (
 // @basepath	/
 func main() {
 	// Manual load env
+	// yang di returnkan itu func main nya makanay backend tikda bisa berjalan
 	if err := godotenv.Load(); err != nil {
 		log.Println("Failed to load env\nCause: ", err.Error())
-		return
+		// return
 	}
 	log.Println(os.Getenv("DBUSERS"))
 	log.Println(os.Getenv("JWT_SECRET"))
@@ -33,12 +34,19 @@ func main() {
 	}
 	defer db.Close()
 
+	rdb, err := configs.InitRedis()
+	if err != nil {
+		log.Println("Failed to connect to database\nCause: ", err.Error())
+		return
+	}
+	defer db.Close()
+
 	if err := configs.TesbDB(db); err != nil {
 		log.Println("Ping to DB failed\nCuase: ", err.Error())
 		return
 	}
 	log.Println("Connect to db")
 
-	router := routers.InitRouter(db)
+	router := routers.InitRouter(db, rdb)
 	router.Run("localhost:3000")
 }
