@@ -291,7 +291,7 @@ func (u *UsersHandler) UserLogin(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, models.ResponseProfile{
 		Status:  "berhasil",
 		Message: "login successful",
-		Data:    gin.H{"id": user.Id, "email": user.Email, "token": token}, // Add the token here
+		Data:    gin.H{"id": user.Id, "email": user.Email, "role": user.Role, "token": token}, // Add the token here
 	})
 }
 
