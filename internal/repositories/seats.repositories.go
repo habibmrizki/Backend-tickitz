@@ -2,11 +2,9 @@ package repositories
 
 import (
 	"context"
-	"errors"
 	"log"
 
 	"github.com/habibmrizki/back-end-tickitz/internal/models"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -50,21 +48,4 @@ func (s *SeatRepository) GetAvailableSeats(ctx context.Context, scheduleID int) 
 	}
 
 	return seats, nil
-}
-
-// GetSeatByID mengambil satu kursi berdasarkan ID-nya
-func (s *SeatRepository) GetSeatByID(ctx context.Context, id int) (*models.SeatStruct, error) {
-	query := `SELECT id, seats_code FROM seats WHERE id = $1;`
-
-	var seat models.SeatStruct
-	err := s.db.QueryRow(ctx, query, id).Scan(&seat.ID, &seat.SeatsCode)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, nil // Return nil jika kursi tidak ditemukan
-		}
-		log.Println("[ERROR]: Failed to get seat by ID:", err.Error())
-		return nil, err
-	}
-
-	return &seat, nil
 }
