@@ -48,5 +48,5 @@ func main() {
 	log.Println("Connect to db")
 
 	router := routers.InitRouter(db, rdb)
-	router.Run("localhost:3000")
+	router.Run(":3000")
 }
