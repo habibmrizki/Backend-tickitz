@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/habibmrizki/back-end-tickitz/internal/models"
-	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -20,14 +19,51 @@ func NewScheduleRepository(db *pgxpool.Pool) *ScheduleRepository {
 }
 
 // GetAllSchedules mengambil semua jadwal dari database
+// func (s *ScheduleRepository) GetAllSchedules(ctx context.Context) ([]models.ScheduleDetails, error) {
+// 	query := `
+// 		SELECT
+// 			S.id,
+// 			S.date,
+// 			C.name AS cinema_name,
+// 			L.location,
+// 			T.time
+// 		FROM schedule AS S
+// 		JOIN cinema AS C ON S.cinema_id = C.id
+// 		JOIN location AS L ON S.location_id = L.id
+// 		JOIN time AS T ON S.time_id = T.id
+// 	`
+
+// 	rows, err := s.db.Query(ctx, query)
+// 	if err != nil {
+// 		log.Println("[ERROR] : ", err.Error())
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
+
+// 	var schedules []models.ScheduleDetails
+// 	for rows.Next() {
+// 		var schedule models.ScheduleDetails
+// 		if err := rows.Scan(&schedule.ID, &schedule.Date, &schedule.CinemaName, &schedule.Location, &schedule.Time); err != nil {
+// 			log.Println("[ERROR] : ", err.Error())
+// 			return nil, err
+// 		}
+// 		schedules = append(schedules, schedule)
+// 	}
+
+// 	return schedules, nil
+// }
+
+// mencoba schedule
 func (s *ScheduleRepository) GetAllSchedules(ctx context.Context) ([]models.ScheduleDetails, error) {
 	query := `
 		SELECT
 			S.id,
 			S.date,
 			C.name AS cinema_name,
+			C.image_path,
 			L.location,
-			T.time
+			T.time,
+			S.movie_id
 		FROM schedule AS S
 		JOIN cinema AS C ON S.cinema_id = C.id
 		JOIN location AS L ON S.location_id = L.id
@@ -44,8 +80,58 @@ func (s *ScheduleRepository) GetAllSchedules(ctx context.Context) ([]models.Sche
 	var schedules []models.ScheduleDetails
 	for rows.Next() {
 		var schedule models.ScheduleDetails
-		if err := rows.Scan(&schedule.ID, &schedule.Date, &schedule.CinemaName, &schedule.Location, &schedule.Time); err != nil {
+		if err := rows.Scan(
+			&schedule.ID,
+			&schedule.Date,
+			&schedule.CinemaName,
+			&schedule.ImagePath,
+			&schedule.Location,
+			&schedule.Time,
+			&schedule.MovieID,
+		); err != nil {
 			log.Println("[ERROR] : ", err.Error())
+			return nil, err
+		}
+		schedules = append(schedules, schedule)
+	}
+
+	return schedules, nil
+}
+
+func (s *ScheduleRepository) GetSchedulesByMovieID(ctx context.Context, movieID int) ([]models.ScheduleDetails, error) {
+	query := `
+		SELECT
+			S.id,
+			S.date,
+			C.name AS cinema_name,
+			C.image_path,
+			L.location,
+			T.time,
+			S.movie_id
+		FROM schedule AS S
+		JOIN cinema AS C ON S.cinema_id = C.id
+		JOIN location AS L ON S.location_id = L.id
+		JOIN time AS T ON S.time_id = T.id
+		WHERE S.movie_id = $1
+	`
+	rows, err := s.db.Query(ctx, query, movieID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var schedules []models.ScheduleDetails
+	for rows.Next() {
+		var schedule models.ScheduleDetails
+		if err := rows.Scan(
+			&schedule.ID,
+			&schedule.Date,
+			&schedule.CinemaName,
+			&schedule.ImagePath,
+			&schedule.Location,
+			&schedule.Time,
+			&schedule.MovieID,
+		); err != nil {
 			return nil, err
 		}
 		schedules = append(schedules, schedule)
@@ -55,41 +141,41 @@ func (s *ScheduleRepository) GetAllSchedules(ctx context.Context) ([]models.Sche
 }
 
 // GetScheduleByMovieId mengambil jadwal berdasarkan ID film
-func (s *ScheduleRepository) GetScheduleByMovieId(ctx context.Context, movieID int) ([]models.ScheduleDetails, error) {
-	query := `
-		SELECT
-			S.id,
-			S.date,
-			C.name AS cinema_name,
-			L.location,
-			T.time
-		FROM schedule AS S
-		JOIN cinema AS C ON S.cinema_id = C.id
-		JOIN location AS L ON S.location_id = L.id
-		JOIN time AS T ON S.time_id = T.id
-		WHERE S.movie_id = $1
-	`
+// func (s *ScheduleRepository) GetScheduleByMovieId(ctx context.Context, movieID int) ([]models.ScheduleDetails, error) {
+// 	query := `
+// 		SELECT
+// 			S.id,
+// 			S.date,
+// 			C.name AS cinema_name,
+// 			L.location,
+// 			T.time
+// 		FROM schedule AS S
+// 		JOIN cinema AS C ON S.cinema_id = C.id
+// 		JOIN location AS L ON S.location_id = L.id
+// 		JOIN time AS T ON S.time_id = T.id
+// 		WHERE S.movie_id = $1
+// 	`
 
-	rows, err := s.db.Query(ctx, query, movieID)
-	if err != nil {
-		log.Println("[ERROR] : ", err.Error())
-		return nil, err
-	}
-	defer rows.Close()
+// 	rows, err := s.db.Query(ctx, query, movieID)
+// 	if err != nil {
+// 		log.Println("[ERROR] : ", err.Error())
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
 
-	var schedules []models.ScheduleDetails
-	for rows.Next() {
-		var schedule models.ScheduleDetails
-		if err := rows.Scan(&schedule.ID, &schedule.Date, &schedule.CinemaName, &schedule.Location, &schedule.Time); err != nil {
-			log.Println("[ERROR] : ", err.Error())
-			return nil, err
-		}
-		schedules = append(schedules, schedule)
-	}
+// 	var schedules []models.ScheduleDetails
+// 	for rows.Next() {
+// 		var schedule models.ScheduleDetails
+// 		if err := rows.Scan(&schedule.ID, &schedule.Date, &schedule.CinemaName, &schedule.Location, &schedule.Time); err != nil {
+// 			log.Println("[ERROR] : ", err.Error())
+// 			return nil, err
+// 		}
+// 		schedules = append(schedules, schedule)
+// 	}
 
-	if len(schedules) == 0 {
-		return nil, pgx.ErrNoRows
-	}
+// 	if len(schedules) == 0 {
+// 		return nil, pgx.ErrNoRows
+// 	}
 
-	return schedules, nil
-}
+// 	return schedules, nil
+// }
