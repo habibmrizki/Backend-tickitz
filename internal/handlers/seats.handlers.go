@@ -69,38 +69,38 @@ func (h *SeatHandler) GetAvailableSeats(ctx *gin.Context) {
 // @failure                 404 {object} models.Response
 // @failure                 500 {object} models.Response
 // @success                 200 {object} models.SeatStruct
-func (h *SeatHandler) GetSeatByID(ctx *gin.Context) {
-	seatIDStr := ctx.Param("seatId")
-	seatID, err := strconv.Atoi(seatIDStr)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, models.Response{
-			Status:  "gagal",
-			Message: "ID kursi tidak valid",
-		})
-		return
-	}
+// func (h *SeatHandler) GetSeatByID(ctx *gin.Context) {
+// 	seatIDStr := ctx.Param("seatId")
+// 	seatID, err := strconv.Atoi(seatIDStr)
+// 	if err != nil {
+// 		ctx.JSON(http.StatusBadRequest, models.Response{
+// 			Status:  "gagal",
+// 			Message: "ID kursi tidak valid",
+// 		})
+// 		return
+// 	}
 
-	seat, err := h.seatRepo.GetSeatByID(ctx.Request.Context(), seatID)
-	if err != nil {
-		log.Println("[ERROR]: Gagal mengambil kursi:", err.Error())
-		ctx.JSON(http.StatusInternalServerError, models.Response{
-			Status:  "gagal",
-			Message: "Kesalahan server internal",
-		})
-		return
-	}
+// 	seat, err := h.seatRepo.GetSeatByID(ctx.Request.Context(), seatID)
+// 	if err != nil {
+// 		log.Println("[ERROR]: Gagal mengambil kursi:", err.Error())
+// 		ctx.JSON(http.StatusInternalServerError, models.Response{
+// 			Status:  "gagal",
+// 			Message: "Kesalahan server internal",
+// 		})
+// 		return
+// 	}
 
-	if seat == nil {
-		ctx.JSON(http.StatusNotFound, models.Response{
-			Status:  "gagal",
-			Message: "Kursi tidak ditemukan",
-		})
-		return
-	}
+// 	if seat == nil {
+// 		ctx.JSON(http.StatusNotFound, models.Response{
+// 			Status:  "gagal",
+// 			Message: "Kursi tidak ditemukan",
+// 		})
+// 		return
+// 	}
 
-	ctx.JSON(http.StatusOK, models.ResponseWithData{
-		Status:  "berhasil",
-		Message: "Berhasil mendapatkan detail kursi",
-		Data:    seat,
-	})
-}
+// 	ctx.JSON(http.StatusOK, models.ResponseWithData{
+// 		Status:  "berhasil",
+// 		Message: "Berhasil mendapatkan detail kursi",
+// 		Data:    seat,
+// 	})
+// }
