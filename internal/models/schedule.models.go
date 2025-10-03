@@ -41,6 +41,6 @@ type ScheduleDetails struct {
 	CinemaName string    `json:"cinema_name"`
 	ImagePath  string    `json:"image_path"`
 	Location   string    `json:"location"`
-	Time       string    `json:"time"`
+	Time       time.Time `json:"time"`
 	MovieID    int       `json:"movie_id"`
 }
