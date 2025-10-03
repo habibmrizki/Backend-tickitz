@@ -15,7 +15,8 @@ func InitOrderRouter(router *gin.Engine, db *pgxpool.Pool, rdb *redis.Client) {
 	orderHandler := handlers.NewOrderHandlers(orderRepo)
 
 	ordersGroup := router.Group("/orders").Use(middlewares.VerifyTokenWithBlacklist(rdb))
-	ordersGroup.POST("", middlewares.VerifyToken, middlewares.Access("user"), orderHandler.CreateOrder)
+	// ordersGroup.POST("", middlewares.VerifyToken, middlewares.Access("user"), orderHandler.CreateOrder)
+	ordersGroup.POST("", middlewares.Access("user"), orderHandler.CreateOrder)
 	ordersGroup.GET("/history/:userId", middlewares.VerifyToken, middlewares.Access("user"), orderHandler.GetOrderHistory)
 	ordersGroup.GET("/:orderId", middlewares.VerifyToken, middlewares.Access("user"), orderHandler.GetOrderByID)
 
