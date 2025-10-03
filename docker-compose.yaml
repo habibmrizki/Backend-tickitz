@@ -15,7 +15,6 @@
 #       # bisa lebih dari 1 makanya dibkin kaya dibawah
 #       - "app-net"
 # networks:
-#   app-net:
 #     # ada externak true sudah dibuat
 #
 #     external: true
@@ -70,7 +69,6 @@
 # volumes:
 #   pg-data:
 
-
 # version: "3.9"
 
 # services:
@@ -86,7 +84,7 @@
 #       - pg-data:/var/lib/postgresql/data
 #     networks:
 #       - my-net
-    
+
 #   backend:
 #     image: ghcr.io/habibmrizki/backend-tickitz:latest
 #     env_file:
@@ -101,7 +99,7 @@
 #     depends_on:
 #       pg-db:
 #         condition: service_healthy
-      
+
 #   rdb:
 #     image: redis:8.2-alpine
 #     env_file:
@@ -114,7 +112,7 @@
 #       - "6378:6379"
 
 #   frontend:
-#     image: 
+#     image:
 #     build: ../Frond-end tickitz
 #     depends_on:
 #       - backend
@@ -125,13 +123,11 @@
 #     networks:
 #       - my-net
 
-
 # networks:
 #   my-net:
 
 # volumes:
 #   pg-data:
-
 
 services:
   postgres:
@@ -150,13 +146,13 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    
+
   backend:
     image: ghcr.io/habibmrizki/backend-tickitz:latest
     env_file:
       - ./.env
     volumes:
-      - ./.env:/app/.env
+      - ./.env:/app/.env  
     networks:
       - my-net
     ports:
@@ -164,7 +160,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      
+
   rdb:
     image: redis:8.2-alpine
     env_file:
