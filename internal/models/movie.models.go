@@ -273,13 +273,14 @@ type MovieArchived struct {
 }
 
 type MovieListAdminStruct struct {
-	Id          int       `json:"id"`
-	Title       string    `json:"title"`
-	Synopsis    string    `json:"synopsis"`
-	PosterPath  string    `json:"poster_path"`
-	Duration    int       `json:"duration"`
-	ReleaseDate time.Time `json:"release_date"`
-	Genres      []string  `json:"genres"`
+	Id          int        `json:"id"`
+	Title       string     `json:"title"`
+	Synopsis    string     `json:"synopsis"`
+	PosterPath  string     `json:"poster_path"`
+	Duration    int        `json:"duration"`
+	ReleaseDate time.Time  `json:"release_date"`
+	Genres      []string   `json:"genres"`
+	ArchivedAt  *time.Time `json:"archived_at,omitempty"`
 }
 
 type MovieListAdminResponse struct {

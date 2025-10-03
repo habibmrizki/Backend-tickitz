@@ -446,6 +446,7 @@ func (m *MovieRepository) GetAllMovies(ctx context.Context) ([]models.MovieListA
 				json_agg(DISTINCT g.name) FILTER (WHERE g.id IS NOT NULL),
 				'[]'
 			) AS genres
+			 mv.archived_at 
 		FROM
 			movie mv
 		LEFT JOIN
@@ -478,6 +479,7 @@ func (m *MovieRepository) GetAllMovies(ctx context.Context) ([]models.MovieListA
 			&movie.Duration,
 			&movie.ReleaseDate,
 			&genresJSON,
+			&movie.ArchivedAt,
 		); err != nil {
 			log.Println("[ERROR] : ", err.Error())
 			return nil, err
