@@ -69,7 +69,7 @@ import (
 func VerifyToken(ctx *gin.Context) {
 	// ambil token dari header
 	bearerToken := ctx.GetHeader("Authorization")
-
+	bearerToken = strings.TrimSpace(bearerToken)
 	// Periksa jika header kosong atau tidak diawali dengan "Bearer "
 	if bearerToken == "" || !strings.HasPrefix(bearerToken, "Bearer ") {
 		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -116,6 +116,7 @@ func VerifyToken(ctx *gin.Context) {
 func VerifyTokenWithBlacklist(rdb *redis.Client) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		bearerToken := ctx.GetHeader("Authorization")
+		bearerToken = strings.TrimSpace(bearerToken)
 		if bearerToken == "" || !strings.HasPrefix(bearerToken, "Bearer ") {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"success": false,
