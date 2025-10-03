@@ -132,6 +132,7 @@ func (s *ScheduleRepository) GetSchedulesByMovieID(ctx context.Context, movieID 
 			&schedule.Time,
 			&schedule.MovieID,
 		); err != nil {
+			log.Println("[ERROR] Scan schedule failed: ", err.Error())
 			return nil, err
 		}
 		schedules = append(schedules, schedule)
