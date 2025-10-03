@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"log"
 	"net/http"
 	"slices"
 
@@ -21,7 +22,8 @@ func Access(roles ...string) func(*gin.Context) {
 		}
 		user, ok := claims.(pkg.Claims)
 		if !ok {
-			// log.Println("Cannot cast claims into pkg.claims")
+			log.Println("Cannot cast claims into pkg.claims")
+
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"error":   "Internal server error",

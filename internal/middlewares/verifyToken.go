@@ -129,6 +129,8 @@ func VerifyTokenWithBlacklist(rdb *redis.Client) gin.HandlerFunc {
 		// Cek blacklist token di Redis
 		blacklisted, err := configs.IsTokenBlacklisted(rdb, token)
 		if err != nil {
+			log.Println("[ERROR] : ", err.Error())
+
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"error":   "Internal Server Error",

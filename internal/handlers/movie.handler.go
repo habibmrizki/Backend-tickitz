@@ -202,6 +202,7 @@ func (m *MovieHandler) GetMoviesWithPagination(ctx *gin.Context) {
 		genres,
 	)
 	if err != nil {
+		log.Println("[ERROR] : ", err.Error())
 		ctx.JSON(http.StatusInternalServerError, models.Response{
 			Status:  "error",
 			Message: err.Error(),
@@ -314,6 +315,7 @@ func (m *MovieHandler) UpdateMovie(ctx *gin.Context) {
 		location := filepath.Join("public", "images", filename)
 
 		if err := ctx.SaveUploadedFile(filePoster, location); err != nil {
+			log.Println("[ERROR] : ", err.Error())
 			ctx.JSON(http.StatusInternalServerError, models.Response{
 				Status:  "gagal",
 				Message: "Gagal mengunggah poster",
@@ -332,6 +334,7 @@ func (m *MovieHandler) UpdateMovie(ctx *gin.Context) {
 		location := filepath.Join("public", "images", filename)
 
 		if err := ctx.SaveUploadedFile(fileBackdrop, location); err != nil {
+			log.Println("[ERROR] : ", err.Error())
 			ctx.JSON(http.StatusInternalServerError, models.Response{
 				Status:  "gagal",
 				Message: "Gagal mengunggah backdrop",
@@ -464,6 +467,8 @@ func (m *MovieHandler) GetAdminMovieDetail(ctx *gin.Context) {
 
 	movie, err := m.movieRepo.GetAdminMovieDetail(ctx.Request.Context(), movieID)
 	if err != nil {
+		log.Println("[ERROR] : ", err.Error())
+
 		ctx.JSON(http.StatusInternalServerError, models.Response{
 			Status:  "gagal",
 			Message: "internal server error",
