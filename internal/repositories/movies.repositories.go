@@ -445,7 +445,7 @@ func (m *MovieRepository) GetAllMovies(ctx context.Context) ([]models.MovieListA
 			COALESCE(
 				json_agg(DISTINCT g.name) FILTER (WHERE g.id IS NOT NULL),
 				'[]'
-			) AS genres
+			) AS genres,
 			 mv.archived_at 
 		FROM
 			movie mv
