@@ -53,6 +53,7 @@ func (m *MovieRepository) GetMovieDetail(ctx context.Context, movieID int) (*mod
             "cast" c ON mc.cast_id = c.id
         WHERE
             mv.id = $1
+			AND mv.archived_at IS NULL 
         GROUP BY
             mv.id, d.name;
     `
@@ -349,6 +350,7 @@ func (m *MovieRepository) GetMoviesWithPagination(
 		LEFT JOIN movie_cast mc ON m.id = mc.movie_id
 		LEFT JOIN "cast" c ON mc.cast_id = c.id
 		WHERE 1=1
+		AND m.archived_at IS NULL 
 	`
 
 	args := []interface{}{}
@@ -453,6 +455,7 @@ func (m *MovieRepository) GetAllMovies(ctx context.Context) ([]models.MovieListA
 			movies_genre mg ON mv.id = mg.movie_id
 		LEFT JOIN
 			genre g ON mg.genre_id = g.id
+		WHERE mv.archived_at IS NULL
 		GROUP BY
 			mv.id
 		ORDER BY
@@ -554,6 +557,7 @@ func (m *MovieRepository) GetPopularMovies(ctx context.Context) ([]models.MovieS
 			LEFT JOIN genre g ON mg.genre_id = g.id
 			LEFT JOIN movie_cast mc ON m.id = mc.movie_id
 			LEFT JOIN "cast" c ON mc.cast_id = c.id
+			WHERE m.archived_at IS NULL
 			GROUP BY m.id, d.name
 			ORDER BY m.popularity DESC;
     `
@@ -640,6 +644,7 @@ LEFT JOIN genre g ON mg.genre_id = g.id
 LEFT JOIN movie_cast mc ON m.id = mc.movie_id
 LEFT JOIN "cast" c ON mc.cast_id = c.id
 WHERE m.release_date > CURRENT_DATE
+AND m.archived_at IS NULL 
 GROUP BY m.id, d.name
 ORDER BY m.release_date ASC;
 `
