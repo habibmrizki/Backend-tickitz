@@ -556,7 +556,7 @@ func (m *MovieRepository) GetPopularMovies(ctx context.Context) ([]models.MovieS
 			LEFT JOIN genre g ON mg.genre_id = g.id
 			LEFT JOIN movie_cast mc ON m.id = mc.movie_id
 			LEFT JOIN "cast" c ON mc.cast_id = c.id
-			
+			WHERE m.archived_at IS NULL
 			GROUP BY m.id, d.name
 			ORDER BY m.popularity DESC;
     `
