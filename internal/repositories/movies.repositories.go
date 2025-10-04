@@ -517,6 +517,13 @@ func (m *MovieRepository) ArchiveMovie(ctx context.Context, movieId int) (models
 	if err != nil {
 		return models.MovieArchived{}, err
 	}
+	redisKeyPopular := "moviePopular"
+	redisKeyUpcoming := "movieUpcoming"
+	res, err := m.rdb.Del(ctx, redisKeyPopular, redisKeyUpcoming).Result()
+	if err != nil {
+		log.Println("ERROR", err.Error())
+	}
+	log.Println("result", res)
 
 	return archivedMovie, nil
 }
