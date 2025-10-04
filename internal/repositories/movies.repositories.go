@@ -324,9 +324,23 @@ func (m *MovieRepository) GetMoviesWithPagination(
 	ctx context.Context,
 	limit, page int,
 	title string,
-	genres []string, //  terima array genre
+	genres []string, // terima array genre
 ) ([]models.MovieStruct, int, error) {
 	offset := (page - 1) * limit
+
+	redisKey := "movieAll"
+	var movies []models.MovieStruct
+
+	// --- Cek Redis dulu ---
+	cache, err := m.rdb.Get(ctx, redisKey).Result()
+	if err == nil {
+		if unmarshalErr := json.Unmarshal([]byte(cache), &movies); unmarshalErr == nil && len(movies) > 0 {
+			return movies, len(movies), nil
+		}
+	} else if err != redis.Nil {
+		// Kalau error selain "key not found"
+		return nil, 0, err
+	}
 
 	// --- Query utama ---
 	baseQuery := `
@@ -350,9 +364,8 @@ func (m *MovieRepository) GetMoviesWithPagination(
 		LEFT JOIN movie_cast mc ON m.id = mc.movie_id
 		LEFT JOIN "cast" c ON mc.cast_id = c.id
 		WHERE 1=1
-	
 	`
-	// 	AND m.archived_at IS NULL
+
 	args := []interface{}{}
 	argID := 1
 
@@ -398,7 +411,7 @@ func (m *MovieRepository) GetMoviesWithPagination(
 	}
 	defer rows.Close()
 
-	var movies []models.MovieStruct
+	movies = []models.MovieStruct{}
 	for rows.Next() {
 		var movie models.MovieStruct
 		var genresStr, castsStr string
@@ -419,16 +432,23 @@ func (m *MovieRepository) GetMoviesWithPagination(
 		); err != nil {
 			return nil, 0, err
 		}
+
 		if genresStr != "" {
 			movie.Genres = strings.Split(genresStr, ",")
 		} else {
-			movie.Genres = []string{} //  fallback kosong
+			movie.Genres = []string{}
 		}
+
 		if castsStr != "" {
 			movie.Casts = strings.Split(castsStr, ",")
 		}
 
 		movies = append(movies, movie)
+	}
+
+	// --- Simpan ke Redis ---
+	if jsonData, err := json.Marshal(movies); err == nil {
+		_ = m.rdb.Set(ctx, redisKey, jsonData, 10*time.Minute).Err()
 	}
 
 	return movies, total, nil
@@ -649,8 +669,7 @@ LEFT JOIN movies_genre mg ON m.id = mg.movie_id
 LEFT JOIN genre g ON mg.genre_id = g.id
 LEFT JOIN movie_cast mc ON m.id = mc.movie_id
 LEFT JOIN "cast" c ON mc.cast_id = c.id
-WHERE m.release_date > CURRENT_DATE
-
+WHERE m.release_date > CURRENT_DATE AND m.archived_at IS NULL
 GROUP BY m.id, d.name
 ORDER BY m.release_date ASC;
 `
