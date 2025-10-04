@@ -39,7 +39,7 @@ func main() {
 		log.Println("Failed to connect to database\nCause: ", err.Error())
 		return
 	}
-	defer db.Close()
+	defer rdb.Close()
 
 	if err := configs.TesbDB(db); err != nil {
 		log.Println("Ping to DB failed\nCuase: ", err.Error())
