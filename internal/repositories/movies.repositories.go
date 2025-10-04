@@ -53,10 +53,10 @@ func (m *MovieRepository) GetMovieDetail(ctx context.Context, movieID int) (*mod
             "cast" c ON mc.cast_id = c.id
         WHERE
             mv.id = $1
-			AND mv.archived_at IS NULL 
         GROUP BY
             mv.id, d.name;
     `
+	// AND mv.archived_at IS NULL
 	var movie models.MovieDetailStruct
 	var genresJSON []byte   // Use byte slice to scan JSON from the query
 	var castListJSON []byte // Use byte slice to scan JSON from the query
@@ -350,9 +350,9 @@ func (m *MovieRepository) GetMoviesWithPagination(
 		LEFT JOIN movie_cast mc ON m.id = mc.movie_id
 		LEFT JOIN "cast" c ON mc.cast_id = c.id
 		WHERE 1=1
-		AND m.archived_at IS NULL 
+	
 	`
-
+	// 	AND m.archived_at IS NULL
 	args := []interface{}{}
 	argID := 1
 
@@ -455,13 +455,12 @@ func (m *MovieRepository) GetAllMovies(ctx context.Context) ([]models.MovieListA
 			movies_genre mg ON mv.id = mg.movie_id
 		LEFT JOIN
 			genre g ON mg.genre_id = g.id
-		WHERE mv.archived_at IS NULL
 		GROUP BY
 			mv.id
 		ORDER BY
 			mv.created_at DESC;
 	`
-
+	// 	WHERE mv.archived_at IS NULL
 	rows, err := m.db.Query(ctx, sql)
 	if err != nil {
 		log.Println("[ERROR] : ", err.Error())
@@ -557,11 +556,11 @@ func (m *MovieRepository) GetPopularMovies(ctx context.Context) ([]models.MovieS
 			LEFT JOIN genre g ON mg.genre_id = g.id
 			LEFT JOIN movie_cast mc ON m.id = mc.movie_id
 			LEFT JOIN "cast" c ON mc.cast_id = c.id
-			WHERE m.archived_at IS NULL
+			
 			GROUP BY m.id, d.name
 			ORDER BY m.popularity DESC;
     `
-
+	// WHERE m.archived_at IS NULL
 	rows, err := m.db.Query(ctx, query)
 	if err != nil {
 		log.Println("[ERROR]:", err)
@@ -644,11 +643,11 @@ LEFT JOIN genre g ON mg.genre_id = g.id
 LEFT JOIN movie_cast mc ON m.id = mc.movie_id
 LEFT JOIN "cast" c ON mc.cast_id = c.id
 WHERE m.release_date > CURRENT_DATE
-AND m.archived_at IS NULL 
+
 GROUP BY m.id, d.name
 ORDER BY m.release_date ASC;
 `
-
+	// AND m.archived_at IS NULL
 	rows, err := m.db.Query(ctx, query)
 	if err != nil {
 		log.Println("[ERROR]:", err)
