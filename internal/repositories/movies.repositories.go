@@ -324,23 +324,9 @@ func (m *MovieRepository) GetMoviesWithPagination(
 	ctx context.Context,
 	limit, page int,
 	title string,
-	genres []string, // terima array genre
+	genres []string, //  terima array genre
 ) ([]models.MovieStruct, int, error) {
 	offset := (page - 1) * limit
-
-	redisKey := "movieAll"
-	var movies []models.MovieStruct
-
-	// --- Cek Redis dulu ---
-	cache, err := m.rdb.Get(ctx, redisKey).Result()
-	if err == nil {
-		if unmarshalErr := json.Unmarshal([]byte(cache), &movies); unmarshalErr == nil && len(movies) > 0 {
-			return movies, len(movies), nil
-		}
-	} else if err != redis.Nil {
-		// Kalau error selain "key not found"
-		return nil, 0, err
-	}
 
 	// --- Query utama ---
 	baseQuery := `
@@ -364,8 +350,9 @@ func (m *MovieRepository) GetMoviesWithPagination(
 		LEFT JOIN movie_cast mc ON m.id = mc.movie_id
 		LEFT JOIN "cast" c ON mc.cast_id = c.id
 		WHERE 1=1
+	
 	`
-
+	// 	AND m.archived_at IS NULL
 	args := []interface{}{}
 	argID := 1
 
@@ -411,7 +398,7 @@ func (m *MovieRepository) GetMoviesWithPagination(
 	}
 	defer rows.Close()
 
-	movies = []models.MovieStruct{}
+	var movies []models.MovieStruct
 	for rows.Next() {
 		var movie models.MovieStruct
 		var genresStr, castsStr string
@@ -432,13 +419,11 @@ func (m *MovieRepository) GetMoviesWithPagination(
 		); err != nil {
 			return nil, 0, err
 		}
-
 		if genresStr != "" {
 			movie.Genres = strings.Split(genresStr, ",")
 		} else {
-			movie.Genres = []string{}
+			movie.Genres = []string{} //  fallback kosong
 		}
-
 		if castsStr != "" {
 			movie.Casts = strings.Split(castsStr, ",")
 		}
@@ -446,13 +431,183 @@ func (m *MovieRepository) GetMoviesWithPagination(
 		movies = append(movies, movie)
 	}
 
-	// --- Simpan ke Redis ---
-	if jsonData, err := json.Marshal(movies); err == nil {
-		_ = m.rdb.Set(ctx, redisKey, jsonData, 10*time.Minute).Err()
-	}
-
 	return movies, total, nil
 }
+
+// suatu saat
+// func (m *MovieRepository) GetMoviesWithPagination(
+// 	ctx context.Context,
+// 	limit, page int,
+// 	title string,
+// 	genres []string,
+// ) ([]models.MovieStruct, int, error) {
+// 	offset := (page - 1) * limit
+
+// 	// --- Redis key harus dinamis ---
+// 	redisKey := fmt.Sprintf(
+// 		"movies:limit=%d:page=%d:title=%s:genres=%s",
+// 		limit,
+// 		page,
+// 		title,
+// 		strings.Join(genres, "-"),
+// 	)
+
+// 	var movies []models.MovieStruct
+
+// 	// --- Cek Redis dulu ---
+// 	cache, err := m.rdb.Get(ctx, redisKey).Result()
+// 	if err == nil {
+// 		if unmarshalErr := json.Unmarshal([]byte(cache), &movies); unmarshalErr == nil && len(movies) > 0 {
+// 			// hitung total biar konsisten
+// 			total := len(movies)
+// 			return movies, total, nil
+// 		}
+// 	} else if err != redis.Nil {
+// 		// Kalau error selain "key not found"
+// 		return nil, 0, err
+// 	}
+
+// 	// --- Query utama untuk ambil data ---
+// 	baseQuery := `
+// 		SELECT
+// 			m.id,
+// 			m.director_id,
+// 			d.name AS director_name,
+// 			m.title,
+// 			m.synopsis,
+// 			m.popularity,
+// 			COALESCE(m.poster_path, '') AS poster_path,
+// 			COALESCE(m.backdrop_path, '') AS backdrop_path,
+// 			COALESCE(m.duration, 0) AS duration,
+// 			m.release_date,
+// 			COALESCE(string_agg(DISTINCT g.name, ','), '') AS genres,
+// 			COALESCE(string_agg(DISTINCT c.name, ','), '') AS casts
+// 		FROM movie m
+// 		LEFT JOIN director d ON m.director_id = d.id
+// 		LEFT JOIN movies_genre mg ON m.id = mg.movie_id
+// 		LEFT JOIN genre g ON mg.genre_id = g.id
+// 		LEFT JOIN movie_cast mc ON m.id = mc.movie_id
+// 		LEFT JOIN "cast" c ON mc.cast_id = c.id
+// 		WHERE 1=1
+// 	`
+
+// 	args := []interface{}{}
+// 	argID := 1
+
+// 	// --- Filter judul ---
+// 	if title != "" {
+// 		baseQuery += fmt.Sprintf(" AND m.title ILIKE $%d", argID)
+// 		args = append(args, "%"+title+"%")
+// 		argID++
+// 	}
+
+// 	// --- Filter multi-genre (AND) ---
+// 	for _, gname := range genres {
+// 		baseQuery += fmt.Sprintf(`
+// 			AND EXISTS (
+// 				SELECT 1 FROM movies_genre mgx
+// 				JOIN genre gx ON mgx.genre_id = gx.id
+// 				WHERE mgx.movie_id = m.id AND gx.name ILIKE $%d
+// 			)
+// 		`, argID)
+// 		args = append(args, gname)
+// 		argID++
+// 	}
+
+// 	baseQuery += `
+// 		GROUP BY m.id, d.name
+// 		ORDER BY m.release_date DESC
+// 	`
+
+// 	// --- Query total count (tanpa GROUP BY / string_agg) ---
+// 	countQuery := `
+// 		SELECT COUNT(DISTINCT m.id)
+// 		FROM movie m
+// 		LEFT JOIN director d ON m.director_id = d.id
+// 		LEFT JOIN movies_genre mg ON m.id = mg.movie_id
+// 		LEFT JOIN genre g ON mg.genre_id = g.id
+// 		LEFT JOIN movie_cast mc ON m.id = mc.movie_id
+// 		LEFT JOIN "cast" c ON mc.cast_id = c.id
+// 		WHERE 1=1
+// 	`
+
+// 	countArgs := []interface{}{}
+// 	countArgID := 1
+
+// 	if title != "" {
+// 		countQuery += fmt.Sprintf(" AND m.title ILIKE $%d", countArgID)
+// 		countArgs = append(countArgs, "%"+title+"%")
+// 		countArgID++
+// 	}
+// 	for _, gname := range genres {
+// 		countQuery += fmt.Sprintf(`
+// 			AND EXISTS (
+// 				SELECT 1 FROM movies_genre mgx
+// 				JOIN genre gx ON mgx.genre_id = gx.id
+// 				WHERE mgx.movie_id = m.id AND gx.name ILIKE $%d
+// 			)
+// 		`, countArgID)
+// 		countArgs = append(countArgs, gname)
+// 		countArgID++
+// 	}
+
+// 	var total int
+// 	if err := m.db.QueryRow(ctx, countQuery, countArgs...).Scan(&total); err != nil {
+// 		return nil, 0, err
+// 	}
+
+// 	// --- Tambah LIMIT + OFFSET ---
+// 	baseQuery += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argID, argID+1)
+// 	args = append(args, limit, offset)
+
+// 	rows, err := m.db.Query(ctx, baseQuery, args...)
+// 	if err != nil {
+// 		return nil, 0, err
+// 	}
+// 	defer rows.Close()
+
+// 	movies = []models.MovieStruct{}
+// 	for rows.Next() {
+// 		var movie models.MovieStruct
+// 		var genresStr, castsStr string
+
+// 		if err := rows.Scan(
+// 			&movie.Id,
+// 			&movie.DirectorId,
+// 			&movie.DirectorName,
+// 			&movie.Title,
+// 			&movie.Synopsis,
+// 			&movie.Popularity,
+// 			&movie.PosterPath,
+// 			&movie.BackdropPath,
+// 			&movie.Duration,
+// 			&movie.ReleaseDate,
+// 			&genresStr,
+// 			&castsStr,
+// 		); err != nil {
+// 			return nil, 0, err
+// 		}
+
+// 		if genresStr != "" {
+// 			movie.Genres = strings.Split(genresStr, ",")
+// 		} else {
+// 			movie.Genres = []string{}
+// 		}
+
+// 		if castsStr != "" {
+// 			movie.Casts = strings.Split(castsStr, ",")
+// 		}
+
+// 		movies = append(movies, movie)
+// 	}
+
+// 	// --- Simpan ke Redis ---
+// 	if jsonData, err := json.Marshal(movies); err == nil {
+// 		_ = m.rdb.Set(ctx, redisKey, jsonData, 10*time.Minute).Err()
+// 	}
+
+// 	return movies, total, nil
+// }
 
 // GetAllMovies retrieves all movies from the database
 func (m *MovieRepository) GetAllMovies(ctx context.Context) ([]models.MovieListAdminStruct, error) {
