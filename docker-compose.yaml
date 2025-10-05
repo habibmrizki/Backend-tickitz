@@ -152,7 +152,8 @@ services:
     env_file:
       - ./.env
     volumes:
-      - ./.env:/app/.env  
+      - ./.env:/app/.env
+      - /home/habib/Documents/Koda-3/back-end-tickitz/public:/app/public
     networks:
       - my-net
     ports:

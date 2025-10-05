@@ -21,7 +21,8 @@ func InitRouter(db *pgxpool.Pool, rdb *redis.Client) *gin.Engine {
 	docs.SwaggerInfo.BasePath = "/"
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
-	router.Static("/img", "./public/images")
+	// router.Static("/img", "./public/images")
+	router.Static("/img", "public/images")
 	// Panggil fungsi inisialisasi rute-rute khusus
 	InitUsersRouter(router, db, rdb)
 	InitAdminMovieRouter(router, db, rdb)
