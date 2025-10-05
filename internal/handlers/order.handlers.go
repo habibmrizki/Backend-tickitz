@@ -92,7 +92,7 @@ func NewOrderHandlers(orderRepo *repositories.OrderRepository) *OrderHandler {
 // @failure                 500 {object} models.Response
 func (o *OrderHandler) CreateOrder(ctx *gin.Context) {
 	var requestBody models.Order
-	if err := ctx.ShouldBind(&requestBody); err != nil {
+	if err := ctx.ShouldBindJSON(&requestBody); err != nil {
 		log.Println("[ERROR] : ", err.Error())
 		ctx.JSON(http.StatusBadRequest, models.Response{
 			Status:  "gagal",
@@ -100,7 +100,7 @@ func (o *OrderHandler) CreateOrder(ctx *gin.Context) {
 		})
 		return
 	}
-
+	log.Printf("[Handler] Received IsPaid: %v", requestBody.IsPaid)
 	order, err := o.orderRepo.CreateOrder(ctx.Request.Context(), requestBody)
 	if err != nil {
 		log.Println("[ERROR] : ", err.Error())
