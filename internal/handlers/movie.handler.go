@@ -446,6 +446,16 @@ func (m *MovieHandler) AddNewMovie(ctx *gin.Context) {
 		})
 		return
 	}
+	// === Insert ke DB dengan Schedules ===
+	// err := m.movieRepo.AddNewMovie(ctx.Request.Context(), req, posterPath, backdropPath)
+	// if err != nil {
+	// 	log.Printf("[ERROR AddNewMovie][Handler][Repo]: %v\n", err)
+	// 	ctx.JSON(http.StatusInternalServerError, models.Response{
+	// 		Status:  "gagal",
+	// 		Message: "Gagal menambahkan film: " + err.Error(),
+	// 	})
+	// 	return
+	// }
 
 	log.Println("[INFO AddNewMovie][Handler]: Film berhasil ditambahkan")
 	ctx.JSON(http.StatusCreated, models.Response{
