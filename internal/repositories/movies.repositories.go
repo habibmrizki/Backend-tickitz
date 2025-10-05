@@ -350,7 +350,7 @@ func (m *MovieRepository) GetMoviesWithPagination(
 		LEFT JOIN movie_cast mc ON m.id = mc.movie_id
 		LEFT JOIN "cast" c ON mc.cast_id = c.id
 		WHERE 1=1
-	
+		AND m.archive_at IS NULL 
 	`
 	// 	AND m.archived_at IS NULL
 	args := []interface{}{}
