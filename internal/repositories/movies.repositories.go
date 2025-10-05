@@ -1384,6 +1384,17 @@ func (m *MovieRepository) AddNewMovie(
 		}
 	}
 
+	for _, schedule := range movie.Schedules {
+		_, err := tx.Exec(ctx,
+			`INSERT INTO schedule (movie_id, cinema_id, location_id, time_id, date)
+             VALUES ($1, $2, $3, $4, $5)`,
+			movieID, schedule.CinemaID, schedule.LocationID, schedule.TimeID, schedule.Date,
+		)
+		if err != nil {
+			return fmt.Errorf("gagal insert schedule: %w", err)
+		}
+	}
+
 	return tx.Commit(ctx)
 }
 
