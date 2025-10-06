@@ -214,17 +214,20 @@ type PaginatedMovieListResponse struct {
 }
 
 type NewMovieRequest struct {
-	Title        string                  `json:"title" form:"title" binding:"required"`
-	Synopsis     string                  `json:"synopsis" form:"synopsis" binding:"required"`
-	Duration     int                     `json:"duration" form:"duration" binding:"required"`
-	DirectorName string                  `json:"director" form:"director" binding:"required"`
-	ReleaseDate  time.Time               `json:"release_date" form:"release_date" binding:"required" time_format:"2006-01-02"`
-	PosterPath   *multipart.FileHeader   `json:"-" form:"poster_path" binding:"required"`
-	BackdropPath *multipart.FileHeader   `json:"-" form:"backdrop_path" binding:"required"`
-	Popularity   int                     `json:"popularity" form:"popularity"`
-	Genres       []string                `json:"genres" form:"genres" binding:"required"`
-	Casts        []string                `json:"casts" form:"casts" binding:"required"`
-	Schedules    []ScheduleCreateRequest `json:"schedules"`
+	Title        string                `json:"title" form:"title" binding:"required"`
+	Synopsis     string                `json:"synopsis" form:"synopsis" binding:"required"`
+	Duration     int                   `json:"duration" form:"duration" binding:"required"`
+	DirectorName string                `json:"director" form:"director" binding:"required"`
+	ReleaseDate  time.Time             `json:"release_date" form:"release_date" binding:"required" time_format:"2006-01-02"`
+	PosterPath   *multipart.FileHeader `json:"-" form:"poster_path" binding:"required"`
+	BackdropPath *multipart.FileHeader `json:"-" form:"backdrop_path" binding:"required"`
+	Popularity   int                   `json:"popularity" form:"popularity"`
+	Genres       []string              `json:"genres" form:"genres" binding:"required"`
+	Casts        []string              `json:"casts" form:"casts" binding:"required"`
+	Location     string                `form:"location"`
+	ScheduleDate string                `form:"schedule_date"`
+	CinemasStr   string                `form:"cinemas"`
+	ShowtimesStr string                `form:"showtimes"`
 }
 
 type GenreUp struct {

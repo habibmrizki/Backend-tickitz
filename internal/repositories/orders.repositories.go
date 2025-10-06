@@ -347,9 +347,9 @@ func (o *OrderRepository) CreateOrder(ctx context.Context, orderData models.Orde
 	log.Printf("[CreateOrder] Akan insert dengan IsPaid: %v", newOrder.IsPaid)
 
 	queryOrders := `
-		INSERT INTO orders (users_id, schedule_id, payment_method_id, total_price, ispaid, created_at, update_at, full_name, email, phone_number)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-		RETURNING id, ispaid`
+			INSERT INTO orders (users_id, schedule_id, payment_method_id, total_price, ispaid, created_at, update_at, full_name, email, phone_number)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			RETURNING id, ispaid`
 
 	//Scan kedua field
 	err = tx.QueryRow(ctx, queryOrders,
@@ -396,8 +396,8 @@ func (o *OrderRepository) CreateOrder(ctx context.Context, orderData models.Orde
 	}
 
 	queryOrderSeats := `
-		INSERT INTO order_seats (orders_id, seats_id)
-		SELECT $1, unnest($2::int[])`
+			INSERT INTO order_seats (orders_id, seats_id)
+			SELECT $1, unnest($2::int[])`
 
 	_, err = tx.Exec(ctx, queryOrderSeats, newOrder.ID, seatsID)
 	if err != nil {
@@ -406,9 +406,9 @@ func (o *OrderRepository) CreateOrder(ctx context.Context, orderData models.Orde
 	}
 
 	queryUpdatePoints := `
-		UPDATE profile
-		SET point = point + 50
-		WHERE users_id = $1`
+			UPDATE profile
+			SET point = point + 50
+			WHERE users_id = $1`
 
 	_, err = tx.Exec(ctx, queryUpdatePoints, newOrder.IDUsers)
 	if err != nil {

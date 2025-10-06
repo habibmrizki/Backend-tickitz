@@ -19,4 +19,6 @@ func InitMovieRouter(router *gin.Engine, db *pgxpool.Pool, rdb *redis.Client) {
 	movieGroup.GET("", movieHandler.GetMoviesWithPagination)
 
 	movieGroup.GET("/:movieId", movieHandler.GetMovieDetail)
+	genreGroup := router.Group("/genres")
+	genreGroup.GET("", movieHandler.GetGenres)
 }

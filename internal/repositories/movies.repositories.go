@@ -324,9 +324,27 @@ func (m *MovieRepository) GetMoviesWithPagination(
 	ctx context.Context,
 	limit, page int,
 	title string,
-	genres []string, //  terima array genre
+	genres []string,
 ) ([]models.MovieStruct, int, error) {
 	offset := (page - 1) * limit
+
+	// Key redis khusus page pertama
+	redisKey := fmt.Sprintf("movies:page=%d:limit=%d:title=%s:genre=%s",
+		page, limit, title, strings.Join(genres, ","))
+
+	// Cek Redis dulu (hanya cache untuk page=1 & limit=12)
+	if page == 1 && limit == 12 {
+		cache, err := m.rdb.Get(ctx, redisKey).Result()
+		if err == nil && cache != "" {
+			var cached struct {
+				Movies []models.MovieStruct `json:"movies"`
+				Total  int                  `json:"total"`
+			}
+			if err := json.Unmarshal([]byte(cache), &cached); err == nil {
+				return cached.Movies, cached.Total, nil
+			}
+		}
+	}
 
 	// --- Query utama ---
 	baseQuery := `
@@ -352,18 +370,17 @@ func (m *MovieRepository) GetMoviesWithPagination(
 		WHERE 1=1
 		AND m.archived_at IS NULL 
 	`
-	// 	AND m.archived_at IS NULL
 	args := []interface{}{}
 	argID := 1
 
-	// --- Filter judul ---
+	// Filter title
 	if title != "" {
 		baseQuery += fmt.Sprintf(" AND m.title ILIKE $%d", argID)
 		args = append(args, "%"+title+"%")
 		argID++
 	}
 
-	// --- Filter multi-genre (AND) ---
+	// Filter genres (AND logic)
 	for _, gname := range genres {
 		baseQuery += fmt.Sprintf(`
 			AND EXISTS (
@@ -381,14 +398,14 @@ func (m *MovieRepository) GetMoviesWithPagination(
 		ORDER BY m.release_date DESC
 	`
 
-	// --- Hitung total ---
+	// Hitung total
 	countQuery := "SELECT COUNT(*) FROM (" + baseQuery + ") AS sub"
 	var total int
 	if err := m.db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
 
-	// --- Tambah LIMIT + OFFSET ---
+	// Tambah limit & offset
 	baseQuery += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argID, argID+1)
 	args = append(args, limit, offset)
 
@@ -421,14 +438,23 @@ func (m *MovieRepository) GetMoviesWithPagination(
 		}
 		if genresStr != "" {
 			movie.Genres = strings.Split(genresStr, ",")
-		} else {
-			movie.Genres = []string{} //  fallback kosong
 		}
 		if castsStr != "" {
 			movie.Casts = strings.Split(castsStr, ",")
 		}
-
 		movies = append(movies, movie)
+	}
+
+	// Simpan ke Redis (cuma halaman pertama, limit 12)
+	if page == 1 && limit == 12 {
+		cacheData, _ := json.Marshal(struct {
+			Movies []models.MovieStruct `json:"movies"`
+			Total  int                  `json:"total"`
+		}{
+			Movies: movies,
+			Total:  total,
+		})
+		_ = m.rdb.Set(ctx, redisKey, cacheData, 20*time.Minute).Err()
 	}
 
 	return movies, total, nil
@@ -1303,6 +1329,8 @@ func (m *MovieRepository) AddNewMovie(
 	ctx context.Context,
 	movie models.NewMovieRequest,
 	posterPath, backdropPath string,
+	cinemas []int,
+	showtimes []string,
 ) error {
 	tx, err := m.db.Begin(ctx)
 	if err != nil {
@@ -1384,15 +1412,89 @@ func (m *MovieRepository) AddNewMovie(
 		}
 	}
 
-	for _, schedule := range movie.Schedules {
-		_, err := tx.Exec(ctx,
-			`INSERT INTO schedule (movie_id, cinema_id, location_id, time_id, date)
-             VALUES ($1, $2, $3, $4, $5)`,
-			movieID, schedule.CinemaID, schedule.LocationID, schedule.TimeID, schedule.Date,
-		)
+	// === Handle Schedules ===
+	if movie.Location != "" && movie.ScheduleDate != "" && len(cinemas) > 0 && len(showtimes) > 0 {
+		log.Printf("[DEBUG] Inserting schedules - Location: %s, Date: %s, Cinemas: %v, Times: %v",
+			movie.Location, movie.ScheduleDate, cinemas, showtimes)
+
+		// Get location_id
+		var locationID int
+		err := tx.QueryRow(ctx,
+			`SELECT id FROM location WHERE location = $1`, movie.Location,
+		).Scan(&locationID)
 		if err != nil {
-			return fmt.Errorf("gagal insert schedule: %w", err)
+			log.Printf("[ERROR] Location not found: %s, error: %v", movie.Location, err)
+			return fmt.Errorf("location '%s' tidak ditemukan: %w", movie.Location, err)
 		}
+		log.Printf("[DEBUG] Location ID found: %d", locationID)
+
+		// Loop setiap kombinasi cinema dan time
+		for _, cinemaID := range cinemas {
+			for _, timeStr := range showtimes {
+				// Get time_id
+				var timeID int
+				err := tx.QueryRow(ctx,
+					`SELECT id FROM time WHERE time = $1`, timeStr+":00",
+				).Scan(&timeID)
+				if err != nil {
+					log.Printf("[ERROR] Time not found: %s, error: %v", timeStr, err)
+					return fmt.Errorf("time '%s' tidak valid: %w", timeStr, err)
+				}
+				log.Printf("[DEBUG] Inserting schedule - Cinema: %d, Time: %d, Location: %d", cinemaID, timeID, locationID)
+
+				// Parse date string ke time.Time
+				parsedDate, err := time.Parse("2006-01-02", movie.ScheduleDate)
+				if err != nil {
+					log.Printf("[ERROR] Invalid date format: %s, error: %v", movie.ScheduleDate, err)
+					return fmt.Errorf("format tanggal tidak valid: %w", err)
+				}
+
+				// Insert schedule dengan date yang sudah di-parse
+				_, err = tx.Exec(ctx,
+					`INSERT INTO schedule (movie_id, cinema_id, location_id, time_id, date)
+             VALUES ($1, $2, $3, $4, $5)`,
+					movieID, cinemaID, locationID, timeID, parsedDate,
+				)
+				if err != nil {
+					log.Printf("[ERROR] Failed to insert schedule: %v", err)
+					return fmt.Errorf("gagal insert schedule: %w", err)
+				}
+			}
+		}
+
+		// for _, cinemaID := range cinemas {
+		// 	for _, timeStr := range showtimes {
+		// 		var timeID int
+
+		// 		// cek kalau timeStr bisa di-convert ke int (time_id langsung)
+		// 		if idVal, err := strconv.Atoi(timeStr); err == nil {
+		// 			timeID = idVal
+		// 		} else {
+		// 			// FE kirim string jam, ambil id dari table time
+		// 			err := tx.QueryRow(ctx,
+		// 				`SELECT id FROM time WHERE time = $1`, timeStr+":00",
+		// 			).Scan(&timeID)
+		// 			if err != nil {
+		// 				return fmt.Errorf("time '%s' tidak valid: %w", timeStr, err)
+		// 			}
+		// 		}
+
+		// 		parsedDate, err := time.Parse("2006-01-02", movie.ScheduleDate)
+		// 		if err != nil {
+		// 			return fmt.Errorf("format tanggal tidak valid: %w", err)
+		// 		}
+
+		// 		_, err = tx.Exec(ctx,
+		// 			`INSERT INTO schedule (movie_id, cinema_id, location_id, time_id, date)
+		//      VALUES ($1, $2, $3, $4, $5)`,
+		// 			movieID, cinemaID, locationID, timeID, parsedDate,
+		// 		)
+		// 		if err != nil {
+		// 			return fmt.Errorf("gagal insert schedule: %w", err)
+		// 		}
+		// 	}
+		// }
+		log.Println("[DEBUG] All schedules inserted successfully")
 	}
 
 	return tx.Commit(ctx)
@@ -1672,4 +1774,25 @@ func (m *MovieRepository) GetAdminMovieDetail(ctx context.Context, movieID int) 
 	}
 
 	return &movie, nil
+}
+
+func (m *MovieRepository) GetAllGenres(ctx context.Context) ([]models.Genre, error) {
+	query := `SELECT id, name FROM genre ORDER BY name ASC`
+
+	rows, err := m.db.Query(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("gagal query genres: %w", err)
+	}
+	defer rows.Close()
+
+	var genres []models.Genre
+	for rows.Next() {
+		var genre models.Genre
+		if err := rows.Scan(&genre.ID, &genre.Name); err != nil {
+			return nil, fmt.Errorf("gagal scan genre: %w", err)
+		}
+		genres = append(genres, genre)
+	}
+
+	return genres, nil
 }

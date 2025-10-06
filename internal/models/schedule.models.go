@@ -44,9 +44,10 @@ type ScheduleDetails struct {
 	Time       string    `json:"time"`
 	MovieID    int       `json:"movie_id"`
 }
-type ScheduleCreateRequest struct {
-	CinemaID   int       `json:"cinema_id" binding:"required"`
-	LocationID int       `json:"location_id" binding:"required"`
-	TimeID     int       `json:"time_id" binding:"required"`
-	Date       time.Time `json:"date" time_format:"2006-01-02" binding:"required"`
-}
+
+// type ScheduleCreateRequest struct {
+// 	CinemaID   int       `json:"cinema_id" binding:"required"`
+// 	LocationID int       `json:"location_id" binding:"required"`
+// 	TimeID     int       `json:"time_id" binding:"required"`
+// 	Date       time.Time `json:"date" time_format:"2006-01-02" binding:"required"`
+// }

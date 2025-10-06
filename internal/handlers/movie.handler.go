@@ -436,26 +436,43 @@ func (m *MovieHandler) AddNewMovie(ctx *gin.Context) {
 	}
 	backdropPath := "/img/" + backdropFilename
 
+	log.Printf("[DEBUG] Location: '%s'", req.Location)
+	log.Printf("[DEBUG] ScheduleDate: '%s'", req.ScheduleDate)
+	log.Printf("[DEBUG] CinemasStr: '%s'", req.CinemasStr)
+	log.Printf("[DEBUG] ShowtimesStr: '%s'", req.ShowtimesStr)
+
+	// Parse cinemas string ke array int
+	var cinemas []int
+	if req.CinemasStr != "" {
+		for _, idStr := range strings.Split(req.CinemasStr, ",") {
+			id, err := strconv.Atoi(strings.TrimSpace(idStr))
+			if err == nil {
+				cinemas = append(cinemas, id)
+			}
+		}
+	}
+
+	// Parse showtimes string ke array string
+	var showtimes []string
+	if req.ShowtimesStr != "" {
+		for _, time := range strings.Split(req.ShowtimesStr, ",") {
+			showtimes = append(showtimes, strings.TrimSpace(time))
+		}
+	}
+
+	log.Printf("[DEBUG] Parsed Cinemas: %v", cinemas)
+	log.Printf("[DEBUG] Parsed Showtimes: %v", showtimes)
+
 	// === Insert ke DB ===
-	err := m.movieRepo.AddNewMovie(ctx.Request.Context(), req, posterPath, backdropPath)
+	err := m.movieRepo.AddNewMovie(ctx.Request.Context(), req, posterPath, backdropPath, cinemas, showtimes)
 	if err != nil {
 		log.Printf("[ERROR AddNewMovie][Handler][Repo]: %v\n", err)
 		ctx.JSON(http.StatusInternalServerError, models.Response{
 			Status:  "gagal",
-			Message: "Gagal menambahkan film",
+			Message: "Gagal menambahkan film: " + err.Error(),
 		})
 		return
 	}
-	// === Insert ke DB dengan Schedules ===
-	// err := m.movieRepo.AddNewMovie(ctx.Request.Context(), req, posterPath, backdropPath)
-	// if err != nil {
-	// 	log.Printf("[ERROR AddNewMovie][Handler][Repo]: %v\n", err)
-	// 	ctx.JSON(http.StatusInternalServerError, models.Response{
-	// 		Status:  "gagal",
-	// 		Message: "Gagal menambahkan film: " + err.Error(),
-	// 	})
-	// 	return
-	// }
 
 	log.Println("[INFO AddNewMovie][Handler]: Film berhasil ditambahkan")
 	ctx.JSON(http.StatusCreated, models.Response{
@@ -497,5 +514,23 @@ func (m *MovieHandler) GetAdminMovieDetail(ctx *gin.Context) {
 		Status:  "berhasil",
 		Message: "successfully retrieved admin movie detail",
 		Data:    *movie,
+	})
+}
+
+func (m *MovieHandler) GetGenres(ctx *gin.Context) {
+	genres, err := m.movieRepo.GetAllGenres(ctx.Request.Context())
+	if err != nil {
+		log.Printf("[ERROR GetGenres][Handler]: %v\n", err)
+		ctx.JSON(http.StatusInternalServerError, models.Response{
+			Status:  "gagal",
+			Message: "Gagal mengambil data genre",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, models.Response{
+		Status:  "berhasil",
+		Message: "Data genre berhasil diambil",
+		Data:    genres,
 	})
 }

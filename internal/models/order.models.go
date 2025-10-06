@@ -113,6 +113,11 @@ type OrderHistory struct {
 	Cinema     Cinema    `json:"cinema"`
 }
 
+type ScheduleResponse struct {
+	Date string `json:"date"`
+	Time string `json:"time"`
+}
+
 // Schedule adalah model untuk informasi jadwal
 // Movie adalah model untuk informasi film
 type Movie struct {
